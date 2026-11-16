@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F3FAF9">
+  <meta name="description" content="Lời Tay: phiên dịch ngôn ngữ ký hiệu Việt Nam ngay trên điện thoại. Dự án khởi nghiệp nhóm 11A4, THPT Lê Quý Đôn.">
+  <title>Lời Tay · Phiên dịch ngôn ngữ ký hiệu</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Bộ icon dùng chung (nét đơn, không hiệu ứng) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6z"/><path d="m12.5 9.5 5 5m0-5-5 5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 20h16"/></symbol>
+  </svg>
+
+  <header class="bar">
+    <a class="brand" href="#chat" aria-label="Lời Tay, về trang trò chuyện">
+      <img src="/logo.svg" alt="" width="40" height="34">
+      <span><b>Lời Tay</b><small>Phiên dịch ngôn ngữ ký hiệu</small></span>
+    </a>
+    <span class="beta">Bản thử nghiệm</span>
+  </header>
+  <nav class="tabs" aria-label="Chuyển trang">
+    <a href="#chat" data-tab="chat"><svg><use href="#i-chat"/></svg>Trò chuyện</a>
+    <a href="#video" data-tab="video-view"><svg><use href="#i-film"/></svg>Dịch video</a>
+    <a href="#vocab" data-tab="vocab"><svg><use href="#i-book"/></svg>Từ vựng</a>
+  </nav>
+
+  <main>
+    <!-- TRANG 1: TRÒ CHUYỆN HAI CHIỀU -->
+    <section class="view" id="chat" aria-label="Trò chuyện">
+      <div class="col">
+        <div class="cam" id="cam">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="cam-off" id="camOff">
+            <img src="/logo.svg" alt="" width="72" height="62">
+            <p id="camMsg">Ra ký hiệu trước camera. Lời Tay đổi thành chữ và đọc to cho người đối diện.</p>
+            <button class="btn primary" id="camStart"><svg><use href="#i-cam"/></svg>Bật camera</button>
+            <small>Thử: bác sĩ, mệt, ho… <a href="#vocab">Xem đủ 20 từ</a><br>Hình ảnh chỉ xử lý trên máy bạn.</small>
+          </div>
+          <p class="cam-hint" id="camHint" hidden>Đưa tay vào khung hình</p>
+          <div class="live" id="live" hidden>
+            <span id="liveWord">…</span>
+            <span class="meter" aria-hidden="true"><i id="liveBar"></i></span>
+          </div>
+        </div>
+
+        <div class="card draft">
+          <div class="row">
+            <span class="label">Câu đang ghép</span>
+            <span class="tools">
+              <button class="icon-btn" id="undo" aria-label="Xoá từ cuối" title="Xoá từ cuối"><svg><use href="#i-undo"/></svg></button>
+              <button class="icon-btn" id="clear" aria-label="Xoá hết" title="Xoá hết"><svg><use href="#i-x"/></svg></button>
+            </span>
+          </div>
+          <p class="words" id="draft" aria-live="polite"><span class="placeholder">Từ nhận được sẽ hiện ở đây</span></p>
+          <button class="btn primary wide" id="send" disabled><svg><use href="#i-send"/></svg>Gửi và đọc to</button>
+        </div>
+      </div>
+
+      <div class="col talk">
+        <div class="card thread-card">
+          <span class="label">Cuộc trò chuyện</span>
+          <ol class="thread" id="thread" aria-live="polite">
+            <li class="empty">Câu bạn gửi và lời người đối diện nói sẽ hiện ở đây, chữ to, dễ đọc.</li>
+          </ol>
+        </div>
+        <div class="card listen">
+          <p class="interim" id="interim">Người đối diện bấm micro rồi nói</p>
+          <button class="mic" id="mic" aria-label="Người đối diện bấm để nói"><svg><use href="#i-mic"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRANG 2: DỊCH VIDEO -->
+    <section class="view" id="video-view" aria-label="Dịch video" hidden>
+      <div class="card pad narrow">
+        <h1>Dịch video</h1>
+        <p class="lead">Chọn video có người ra ký hiệu. Lời Tay xem từng khung hình và liệt kê các từ nhận được.</p>
+        <label class="drop" for="file">
+          <svg><use href="#i-up"/></svg>
+          <b>Chọn video</b>
+          <span>MP4, MOV hoặc WEBM. Video chỉ xử lý trên máy bạn.</span>
+        </label>
+        <input type="file" id="file" accept="video/*" hidden>
+        <div class="progress" id="vprog" hidden><i></i></div>
+        <p class="note" id="vnote" aria-live="polite"></p>
+        <ol class="results" id="vres"></ol>
+      </div>
+    </section>
+
+    <!-- TRANG 3: TỪ VỰNG -->
+    <section class="view" id="vocab" aria-label="Từ vựng" hidden>
+      <div class="card pad narrow">
+        <h1>Lời Tay hiểu được gì?</h1>
+        <p class="lead">Bản thử nghiệm nhận diện 20 ký hiệu ngôn ngữ ký hiệu Việt Nam, chủ đề <b>đi khám bệnh</b>. Ra từng ký hiệu rõ ràng, sau mỗi từ hạ tay xuống một chút.</p>
+        <div id="groups"></div>
+        <p class="credit">
+          Dữ liệu huấn luyện: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> của Cap Pham Dinh Thang (giấy phép CC BY 4.0).
+          Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>
+          Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.
+        </p>
+      </div>
+    </section>
+  </main>
+
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

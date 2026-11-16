@@ -1,0 +1,22 @@
+node_modules/
+out/
+*.mp4
+*.mov
+.DS_Store
+Thumbs.db
+
+# work dirs
+.superpowers/
+ai/data/
+ai/models/
+ai/.venv/
+web/node_modules/
+web/dist/
+__pycache__/
+
+# Không đưa lên GitHub: riêng tư hoặc không phải của nhóm
+poster/
+ai/goc-drive/
+CLAUDE.md
+.claude/
+web/public/demo/

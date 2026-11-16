@@ -1,0 +1,49 @@
+// Bộ nhận diện liên tục: tách từng ký hiệu theo lúc HẠ TAY, rồi đoán một lần cho trọn ký hiệu.
+// Giống hệt cách AI được học (mỗi video là một ký hiệu trọn vẹn), nên đoán chính xác hơn.
+//   - Tay giơ lên (thấy bàn tay, cổ tay cao hơn thắt lưng) -> gom khung vào "đoạn ký hiệu".
+//   - Hạ tay ~0,2 giây -> đoán cả đoạn; đủ tự tin thì ra từ.
+//   - Ra ký hiệu liền mạch quá 3 giây -> tự chốt đoạn đó.
+//   - Trong lúc đang ra ký hiệu, vẫn đoán thử để hiện chữ xem trước (không chốt).
+import { F, sequenceVector } from './features.js'
+import { predict } from './model.js'
+
+const hasHands = f => f[F - 1] !== 0 || f[F - 2] !== 0
+// Cột 16, 19 = độ cao cổ tay trái/phải tính theo bề rộng vai (dương = thấp hơn vai). Lúc nghỉ ≈ 1,4; lúc ký hiệu ≈ 0.
+const raised = f => hasHands(f) && Math.min(f[16], f[19]) < 0.9
+
+export function createRecognizer(model, opts = {}) {
+  const o = { minProb: 0.5, minFrames: 10, restFrames: 6, maxFrames: 90, previewEvery: 4, previewWindow: 40, predictFn: predict, ...opts }
+  let seg = [], rest = 0, lastWord = null
+
+  const ask = frames => o.predictFn(model, sequenceVector(frames), frames.length)
+  function finish() {
+    const frames = seg
+    seg = []
+    if (frames.length < o.minFrames) return null // cử động thoáng qua, bỏ qua
+    const r = ask(frames)
+    api.current = r
+    if (r.prob < o.minProb || r.label === lastWord) return null
+    lastWord = r.label
+    return { word: r.label, prob: r.prob }
+  }
+
+  const api = {
+    current: null,
+    reset() { seg = []; rest = 0; lastWord = null; api.current = null },
+    push(frame) {
+      if (raised(frame)) {
+        rest = 0
+        seg.push(frame)
+        if (seg.length >= o.maxFrames) return finish()
+        if (seg.length >= o.minFrames && seg.length % o.previewEvery === 0) api.current = ask(seg.slice(-o.previewWindow))
+        return null
+      }
+      if (++rest !== o.restFrames) return null
+      const hit = seg.length ? finish() : null // vừa hạ tay đủ lâu: chốt đoạn vừa ra
+      lastWord = null // sau khi nghỉ, được phép lặp lại cùng một từ
+      api.current = null
+      return hit
+    },
+  }
+  return api
+}

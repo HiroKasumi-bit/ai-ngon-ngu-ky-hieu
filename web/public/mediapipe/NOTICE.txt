@@ -1,0 +1,4 @@
+Các file trong thư mục này (wasm/, hand_landmarker.task, pose_landmarker_lite.task) thuộc
+MediaPipe Tasks Vision của Google LLC, phân phối lại nguyên bản theo Apache License, Version 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+Nguồn: https://github.com/google-ai-edge/mediapipe
