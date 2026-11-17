@@ -48,9 +48,9 @@ export function initChat(getEngine) {
   if (import.meta.env.DEV) {
     window.__loiTayChat = { addWord: w => { words.push(w); renderDraft(true) }, addMessage, send: () => $('send').click() }
     if (new URLSearchParams(location.search).has('showcase')) { // ảnh chụp minh hoạ: điền sẵn một đoạn hội thoại mẫu
-      addMessage('me', 'Bạn · ký hiệu', 'Bác sĩ mệt ho.')
-      addMessage('them', 'Người đối diện · giọng nói', 'Bạn bị ho mấy ngày rồi? Có sốt không?')
-      words = ['cảm_cúm', 'sợ_hãi']; renderDraft()
+      addMessage('me', 'Bạn · ký hiệu', 'Trạm y tế.')
+      addMessage('them', 'Người đối diện · giọng nói', 'Bạn cần đến trạm y tế à? Đi thẳng đường này nhé.')
+      words = ['khó_chịu', 'sợ_hãi']; renderDraft()
     }
   }
 

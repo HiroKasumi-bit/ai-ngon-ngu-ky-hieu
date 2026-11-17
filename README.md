@@ -10,7 +10,11 @@ Lời Tay giúp người Điếc và người nghe trò chuyện với nhau:
 
 AI chạy **ngay trong trình duyệt**. Hình ảnh từ camera không bị gửi đi đâu.
 
-> Đây là bản thử nghiệm. Hiện app nhận diện 20 ký hiệu ngôn ngữ ký hiệu Việt Nam thuộc chủ đề **đi khám bệnh**, độ chính xác khoảng 64% với người chưa từng gặp. Khi dùng, hãy ra từng ký hiệu rõ ràng và hạ tay xuống sau mỗi từ.
+> Đây là bản thử nghiệm. Hiện app nhận diện **183 ký hiệu** ngôn ngữ ký hiệu Việt Nam và bỏ qua cử động không phải ký hiệu nó biết.
+> - Với người chưa từng gặp, AI đoán đúng ngay lần đầu khoảng 60%.
+> - Khi chạy thật, app chỉ hiện chữ lúc đủ tự tin, nên ít khi nói sai (khoảng 4%) nhưng hay bỏ sót.
+>
+> Khi dùng, hãy ra từng ký hiệu rõ ràng và hạ tay xuống sau mỗi từ. Nếu không thấy chữ hiện ra, làm lại ký hiệu. Số đo chi tiết ở [ai/README.md](ai/README.md).
 
 ## Cấu trúc
 

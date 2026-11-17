@@ -121,10 +121,15 @@ h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 6
 .results time { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
 
 /* ---------- từ vựng ---------- */
+.search { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--muted) }
+.search:focus-within { border-color: var(--teal) }
+.search input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 17px; color: var(--navy); outline: none }
+#vcount:empty { display: none }
+#groups { margin-top: 20px }
 .group { margin-bottom: 18px }
 .group h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 8px }
 .group div { display: flex; flex-wrap: wrap; gap: 8px }
-.group .word { background: var(--teal-soft); border-color: transparent; font-size: 17px }
+.group .word { background: var(--teal-soft); border-color: transparent; font-size: 16px; padding: 4px 12px }
 .credit { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted) }
 
 /* ---------- thanh chuyển trang ---------- */

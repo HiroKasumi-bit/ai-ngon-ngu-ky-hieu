@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createRecognizer } from '../src/recognizer.js'
 import { F } from '../src/features.js'
+import { OTHER } from '../src/model.js'
 
 // Khung "đang giơ tay": cổ tay ngang vai (y≈0.1 đơn vị vai), có tay phải.
 const handFrame = () => { const f = new Float32Array(F); f.fill(0.1); f[F - 2] = 0; f[F - 1] = 1; return f }
@@ -62,6 +63,30 @@ test('short_blip_is_ignored', () => {
 test('low_confidence_never_fires', () => {
   const rec = createRecognizer({}, { predictFn: () => ({ label: 'ho', prob: 0.3 }) })
   assert.equal(run(rec, [...many(30, handFrame), ...many(10, emptyFrame)]).length, 0)
+})
+
+test('not_a_sign_never_fires', () => {
+  // AI trả lời "không phải từ nào" (cử động bừa) -> không ra chữ, dù tự tin đến đâu.
+  const rec = createRecognizer({}, { predictFn: () => ({ label: OTHER, prob: 0.99 }) })
+  assert.equal(run(rec, [...many(30, handFrame), ...many(10, emptyFrame)]).length, 0)
+})
+
+test('not_a_sign_shows_no_preview', () => {
+  const rec = createRecognizer({}, { predictFn: () => ({ label: OTHER, prob: 0.99 }) })
+  run(rec, many(30, handFrame))
+  assert.equal(rec.current, null)
+})
+
+test('weak_guess_shows_no_preview', () => {
+  const rec = createRecognizer({}, { predictFn: () => ({ label: 'ho', prob: 0.1 }) })
+  run(rec, many(30, handFrame))
+  assert.equal(rec.current, null)
+})
+
+test('threshold_comes_from_the_model', () => {
+  // Ngưỡng tự tin được chọn lúc train (đo trên người lạ) và lưu trong model.json.
+  const rec = createRecognizer({ minProb: 0.2 }, { predictFn: () => ({ label: 'ho', prob: 0.3 }) })
+  assert.equal(run(rec, [...many(30, handFrame), ...many(10, emptyFrame)]).length, 1)
 })
 
 test('long_continuous_signing_is_cut_at_max_length', () => {

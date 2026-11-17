@@ -4,25 +4,30 @@
 //   - Hạ tay ~0,2 giây -> đoán cả đoạn; đủ tự tin thì ra từ.
 //   - Ra ký hiệu liền mạch quá 3 giây -> tự chốt đoạn đó.
 //   - Trong lúc đang ra ký hiệu, vẫn đoán thử để hiện chữ xem trước (không chốt).
+//   - AI đoán "không phải từ nào", hoặc chưa đủ tự tin -> không hiện gì (cử động bừa bị bỏ qua).
 import { F, sequenceVector } from './features.js'
-import { predict } from './model.js'
+import { OTHER, predict } from './model.js'
 
 const hasHands = f => f[F - 1] !== 0 || f[F - 2] !== 0
 // Cột 16, 19 = độ cao cổ tay trái/phải tính theo bề rộng vai (dương = thấp hơn vai). Lúc nghỉ ≈ 1,4; lúc ký hiệu ≈ 0.
 const raised = f => hasHands(f) && Math.min(f[16], f[19]) < 0.9
 
 export function createRecognizer(model, opts = {}) {
-  const o = { minProb: 0.5, minFrames: 10, restFrames: 6, maxFrames: 90, previewEvery: 4, previewWindow: 40, predictFn: predict, ...opts }
+  const o = { minProb: model.minProb ?? 0.5, minFrames: 10, restFrames: 6, maxFrames: 90, previewEvery: 4, previewWindow: 40, predictFn: predict, ...opts }
   let seg = [], rest = 0, lastWord = null
 
-  const ask = frames => o.predictFn(model, sequenceVector(frames), frames.length)
+  // Hỏi AI; chỉ giữ câu trả lời là một từ thật và đủ tự tin, còn lại coi như không có gì.
+  const ask = frames => {
+    const r = o.predictFn(model, sequenceVector(frames), frames.length)
+    return r.label !== OTHER && r.prob >= o.minProb ? r : null
+  }
   function finish() {
     const frames = seg
     seg = []
     if (frames.length < o.minFrames) return null // cử động thoáng qua, bỏ qua
     const r = ask(frames)
     api.current = r
-    if (r.prob < o.minProb || r.label === lastWord) return null
+    if (!r || r.label === lastWord) return null
     lastWord = r.label
     return { word: r.label, prob: r.prob }
   }

@@ -1,11 +1,22 @@
-// "Bộ não" AI: một mạng nơ-ron nhỏ (MLP) train bằng ai/train.py, trọng số lưu trong model.json.
-// Tính toán chỉ là nhân ma trận + cộng + hàm kích hoạt, nên không cần thư viện AI nào.
+// "Bộ não" AI: model tuyến tính (LDA) train bằng ai/train.py, trọng số lưu trong model.json.
+// Tính toán chỉ là nhân ma trận + cộng + softmax, nên không cần thư viện AI nào.
 
-const f32 = b64 => {
+// Nhãn "không phải từ nào": AI học nó từ video của các từ nó không dạy, để biết bỏ qua cử động bừa.
+// Phải trùng với OTHER trong ai/train.py.
+export const OTHER = '_khác'
+
+const bytes = b64 => {
   const bin = atob(b64)
-  const bytes = new Uint8Array(bin.length)
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-  return new Float32Array(bytes.buffer)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out.buffer
+}
+const f32 = b64 => new Float32Array(bytes(b64))
+
+// Trọng số lưu dạng số nguyên 8-bit (nhẹ gấp 4 lần), mỗi cột một hệ số tỉ lệ: W = số nguyên × hệ số.
+const weights = (l, cols) => {
+  const scale = f32(l.scale)
+  return Float32Array.from(new Int8Array(bytes(l.W)), (q, i) => q * scale[i % cols])
 }
 
 // Giải mã trọng số (base64 -> số thực) một lần, ghi đè vào chính object model.
@@ -13,7 +24,7 @@ function decode(model) {
   if (model._ready) return model
   model.mean = f32(model.mean)
   model.std = f32(model.std)
-  model.layers = model.layers.map(l => ({ W: f32(l.W), b: f32(l.b), rows: l.shape[0], cols: l.shape[1] }))
+  model.layers = model.layers.map(l => ({ W: weights(l, l.shape[1]), b: f32(l.b), rows: l.shape[0], cols: l.shape[1] }))
   model._ready = true
   return model
 }

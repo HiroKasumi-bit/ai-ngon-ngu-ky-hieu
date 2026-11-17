@@ -12,13 +12,37 @@ def f32(s):
     return np.frombuffer(base64.b64decode(s), "<f4")
 
 
+def weights(layer):
+    """Trọng số lưu dạng số nguyên 8-bit, mỗi cột một hệ số tỉ lệ."""
+    q = np.frombuffer(base64.b64decode(layer["W"]), np.int8).reshape(layer["shape"])
+    return q * f32(layer["scale"])
+
+
 def test_export_roundtrip():
     m, fx = json.load(open(MODEL, encoding="utf-8")), json.load(open(FIXTURE))
     x = (np.array(fx["vector"], np.float32) - f32(m["mean"])) / f32(m["std"])
     for i, layer in enumerate(m["layers"]):
-        x = x @ f32(layer["W"]).reshape(layer["shape"]) + f32(layer["b"])
+        x = x @ weights(layer) + f32(layer["b"])
         if i < len(m["layers"]) - 1:
             x = np.maximum(x, 0)
     p = np.exp(x - x.max()); p /= p.sum()
     assert np.allclose(p, fx["probs"], atol=1e-5)
-    assert len(m["labels"]) == 20
+
+
+def test_labels_end_with_not_a_sign_and_match_vocab_page():
+    """Nhãn cuối là "không phải từ nào"; trang Từ vựng liệt kê đúng các từ còn lại; có ngưỡng tự tin."""
+    m = json.load(open(MODEL, encoding="utf-8"))
+    words = json.load(open(os.path.join(ROOT, "..", "web", "src", "words.json"), encoding="utf-8"))
+    assert m["labels"][-1] == "_khác"
+    assert m["labels"][:-1] == words
+    assert 0 <= m["minProb"] < 1
+
+
+def test_weights_are_int8_so_phones_download_little():
+    """389 từ x 2024 số: để số thực 32-bit thì model nặng ~4 MB; 8-bit thì ~1 MB."""
+    m = json.load(open(MODEL, encoding="utf-8"))
+    for layer in m["layers"]:
+        rows, cols = layer["shape"]
+        assert len(base64.b64decode(layer["W"])) == rows * cols  # 1 byte mỗi trọng số
+        assert len(f32(layer["scale"])) == cols
+    assert os.path.getsize(MODEL) < 2e6

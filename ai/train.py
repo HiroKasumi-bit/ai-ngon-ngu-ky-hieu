@@ -1,35 +1,49 @@
-"""Dạy AI nhận 20 ký hiệu, chấm điểm trung thực, rồi xuất model cho website.
+"""Dạy AI nhận ký hiệu, biết bỏ qua cử động lạ, chấm điểm trung thực, rồi xuất model cho website.
 
-1. Mỗi video -> vector (sequence_vector).
-2. Nhân bản dữ liệu: mỗi video tạo thêm nhiều biến thể (lật gương, xoay, co giãn, cắt đầu/cuối, nhiễu).
-3. Chấm điểm 2 kiểu:
-   - "người lạ": AI được kiểm tra trên người nó CHƯA từng thấy (chia theo người ra ký hiệu) -> con số trung thực
-   - "ngẫu nhiên": chia video ngẫu nhiên (người có thể trùng) -> con số dễ hơn, chỉ để tham khảo
-4. Train trên toàn bộ dữ liệu, xuất web/public/model/model.json và tests/fixtures/parity.json.
-Chạy: uv run python train.py
+1. Xét các từ có ít nhất MIN_VIDEOS video. Video các từ còn lại gộp thành nhãn "không phải từ nào" (OTHER):
+   nhờ vậy AI học được cách bỏ qua cử động không phải ký hiệu nó biết.
+2. Mỗi video -> vector (sequence_vector). Nhân bản dữ liệu: lật gương, xoay, co giãn, cắt đầu/cuối, nhiễu.
+3. Chỉ dạy từ AI học được: chấm thử trên người lạ, từ nào nhận đúng dưới KEEP_ACC thì gộp vào OTHER.
+   Từ khó mà vẫn dạy thì AI đoán bừa, kéo cả hệ thống nhận nhầm.
+4. Chấm điểm trung thực, chia 5 phần; trong mỗi phần, bước 3 chỉ được nhìn dữ liệu học:
+   - từ được dạy: chia theo NGƯỜI, nên người làm ký hiệu lúc kiểm tra chưa từng xuất hiện lúc học;
+   - "không phải từ nào": chia theo TỪ, nên cử động lúc kiểm tra là thứ AI chưa từng thấy (giống giơ tay bừa).
+   Rồi chọn ngưỡng tự tin sao cho cử động lạ bị nhận thành chữ không quá MAX_FALSE.
+5. Dạy trên toàn bộ dữ liệu, xuất web/public/model/model.json, web/src/words.json và tests/fixtures/parity.json.
+Chạy: uv run python train.py   (khoảng 20 phút)
 """
-import base64, csv, json, os
+import base64, collections, csv, json, os
 
 import numpy as np
-from sklearn.model_selection import GroupKFold, StratifiedKFold
-from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import GroupKFold
 
 from sign.features import F, T, mirror_frames, sequence_vector
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(ROOT, "data")
 WEB_MODEL = os.path.join(ROOT, "..", "web", "public", "model", "model.json")
+WEB_WORDS = os.path.join(ROOT, "..", "web", "src", "words.json")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "parity.json")
 rng = np.random.default_rng(0)
+
+MIN_VIDEOS = 8      # chỉ xét từ có ít nhất 8 video
+KEEP_ACC = 0.4      # chỉ dạy từ AI nhận đúng >= 40% số lần khi gặp người lạ (thử 40/50/60%: 40% nhiều từ nhất, nhầm vẫn ~5%)
+TEMP = 5            # LDA hay quá tự tin: chia điểm cho TEMP để độ tự tin sát thực tế, ngưỡng mới có tác dụng
+OTHER = "_khác"     # nhãn "không phải từ nào"; web/src/model.js dùng đúng chuỗi này
+COPIES = 10         # số biến thể nhân bản cho mỗi video của từ được dạy
+OTHER_COPIES = 2    # video "không phải từ nào" đã rất nhiều nên nhân bản ít hơn
+MAX_FALSE = 0.10    # chấp nhận tối đa 10% cử động lạ bị nhận nhầm thành chữ
 
 
 def load():
     rows = list(csv.DictReader(open(os.path.join(DATA, "labels.csv"), encoding="utf-8")))
+    counts = collections.Counter(r["Meaning"] for r in rows)
+    words = sorted(w for w, n in counts.items() if n >= MIN_VIDEOS)
+    index = {w: i for i, w in enumerate(words)}
+    y = np.array([index.get(r["Meaning"], len(words)) for r in rows])  # từ không được dạy -> OTHER
     frames = [np.load(os.path.join(DATA, "frames", r["ID_video"] + ".npy")) for r in rows]
-    labels = sorted({r["Meaning"] for r in rows})
-    y = np.array([labels.index(r["Meaning"]) for r in rows])
-    groups = np.array([r["Signer"] for r in rows])
-    return rows, frames, labels, y, groups
+    return rows, frames, words + [OTHER], y
 
 
 def augment(frames):
@@ -52,75 +66,178 @@ def augment(frames):
     return f
 
 
-def build(frames_list, y, copies):
-    X, Y = [], []
-    for f, label in zip(frames_list, y):
-        X.append(sequence_vector(f)); Y.append(label)
-        for _ in range(copies):
-            X.append(sequence_vector(augment(f))); Y.append(label)
-    return np.array(X, np.float32), np.array(Y)
-
-
-C = 0.05      # độ "kiềm chế" của model: nhỏ = đơn giản hơn, ít học thuộc lòng (chọn qua thử nghiệm)
-COPIES = 10   # số biến thể nhân bản cho mỗi video
+def build(frames, y, other):
+    """Vector của mọi video kèm các biến thể. V = video gốc của từng dòng, O = dòng đó là bản gốc (không nhân bản)."""
+    X, Y, V, O = [], [], [], []
+    for i, (f, label) in enumerate(zip(frames, y)):
+        for k in range(1 + (OTHER_COPIES if label == other else COPIES)):
+            X.append(sequence_vector(f if k == 0 else augment(f)))
+            Y.append(label); V.append(i); O.append(k == 0)
+    return np.array(X, np.float32), np.array(Y), np.array(V), np.array(O)
 
 
 def fit(X, Y):
-    """Hồi quy logistic: mỗi từ có một bộ trọng số; điểm cao nhất thắng. Đơn giản, nhẹ, hợp với dữ liệu ít."""
+    """Phân tích biệt thức tuyến tính (LDA): mỗi nhãn một bộ trọng số, điểm cao nhất thắng.
+    Thử trên 389 từ, LDA nhận đúng nhiều hơn hồi quy logistic và mạng nơ-ron nhỏ, lại học nhanh nhất.
+    Trên web chỉ là nhân ma trận + softmax."""
     mean, std = X.mean(0), X.std(0)
     std[std < 1e-6] = 1
-    clf = LogisticRegression(C=C, max_iter=3000)
+    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto")
     clf.fit((X - mean) / std, Y)
     return clf, mean, std
 
 
-def score(frames, y, splits, copies=COPIES):
-    acc = []
-    for tr, te in splits:
-        X, Y = build([frames[i] for i in tr], y[tr], copies)
-        clf, mean, std = fit(X, Y)
-        Xt = np.array([sequence_vector(frames[i]) for i in te])
-        acc.append((clf.predict((Xt - mean) / std) == y[te]).mean())
-    return float(np.mean(acc))
+def scores(clf, mean, std, X, n_labels):
+    """Điểm của mọi nhãn, đã chia TEMP; nhãn vắng mặt lúc học = -vô cực (không bao giờ thắng)."""
+    D = np.full((len(X), n_labels), -np.inf)
+    D[:, clf.classes_] = clf.decision_function((X - mean) / std) / TEMP
+    return D
+
+
+def splits(rows, y, other, k=5):
+    signers = [r["Signer"] for r in rows]
+    meaning = [r["Meaning"] for r in rows]
+    sf, wf = np.empty(len(y), int), np.empty(len(y), int)
+    for f, (_, te) in enumerate(GroupKFold(k).split(y, groups=signers)):
+        sf[te] = f
+    for f, (_, te) in enumerate(GroupKFold(k).split(y, groups=meaning)):
+        wf[te] = f
+    neg = y == other
+    for f in range(k):
+        yield (sf != f) & (~neg | (wf != f)), np.where(neg, wf == f, sf == f)
+
+
+def word_accuracy(X, Y, V, O, y, rows, videos, other, k):
+    """Chấm thử k phần trên các video được chọn: mỗi từ được nhận đúng bao nhiêu phần số lần (khi gặp người lạ)."""
+    idx = np.where(videos)[0]
+    hit, cnt = np.zeros(other), np.zeros(other)
+    for tr, te in splits([rows[i] for i in idx], y[idx], other, k):
+        a, b = np.zeros(len(y), bool), np.zeros(len(y), bool)
+        a[idx[tr]], b[idx[te]] = True, True
+        clf, mean, std = fit(X[a[V]], Y[a[V]])
+        sel = b[V] & O
+        guess, truth = scores(clf, mean, std, X[sel], other + 1)[:, :-1].argmax(1), y[V[sel]]
+        m = truth != other
+        np.add.at(cnt, truth[m], 1)
+        np.add.at(hit, truth[m], guess[m] == truth[m])
+    return hit / np.maximum(cnt, 1)
+
+
+def relabel(acc, other):
+    """Giữ các từ nhận đúng >= KEEP_ACC. Trả về chỉ số từ giữ lại và bảng đổi nhãn (từ bị loại -> OTHER)."""
+    keep = np.where(acc >= KEEP_ACC)[0]
+    remap = np.full(other + 1, len(keep))
+    remap[keep] = np.arange(len(keep))
+    return keep, remap
+
+
+def evaluate(X, Y, V, O, y, rows, other):
+    """Mỗi video được kiểm tra đúng 1 lần, khi AI chưa từng thấy người (hoặc từ) đó. Trả về cho từng video:
+    từ AI đoán (-1 = không phải từ nào), độ tự tin, 5 từ điểm cao nhất, và từ đó có được dạy ở phần ấy không."""
+    n = len(y)
+    E = {"guess": np.full(n, -1), "conf": np.zeros(n), "top5": np.full((n, 5), -1), "taught": np.zeros(n, bool)}
+    for f, (train, test) in enumerate(splits(rows, y, other), 1):
+        keep, remap = relabel(word_accuracy(X, Y, V, O, y, rows, train, other, 4), other)
+        clf, mean, std = fit(X[train[V]], remap[Y[train[V]]])
+        sel = test[V] & O
+        vids, D = V[sel], scores(clf, mean, std, X[sel], len(keep) + 1)
+        P = softmax(D)
+        best = P.argmax(1)
+        E["guess"][vids] = np.where(best < len(keep), keep[np.minimum(best, len(keep) - 1)], -1)
+        E["conf"][vids] = P.max(1)
+        E["top5"][vids] = keep[np.argsort(-D[:, :-1], 1)[:, :5]]
+        E["taught"][vids] = np.isin(y[vids], keep)
+        print(f"  phần {f}/5 xong: dạy {len(keep)} từ", flush=True)
+    return E
+
+
+def rates(E, y, other, t):
+    """Tỉ lệ khi app chỉ hiện chữ lúc AI đoán một từ với độ tự tin >= t."""
+    said = (E["guess"] >= 0) & (E["conf"] >= t)
+    right = E["guess"] == y
+    pos, neg = E["taught"], y == other  # neg: video của từ AI chưa từng thấy ở bất kỳ ai
+    return {"correct": float((said & right)[pos].mean()),   # nhận đúng
+            "wrong": float((said & ~right)[pos].mean()),    # nhận nhầm sang từ khác
+            "missed": float((~said)[pos].mean()),           # bỏ sót
+            "false_alarm": float(said[neg].mean())}         # cử động lạ bị nhận thành chữ
 
 
 def b64(a):
     return base64.b64encode(np.ascontiguousarray(a, "<f4").tobytes()).decode()
 
 
-def export(clf, mean, std, labels, metrics):
-    W = clf.coef_.T  # (số đặc trưng, 20 từ)
-    layers = [{"W": b64(W), "b": b64(clf.intercept_), "shape": list(W.shape)}]
+def quantize(W):
+    """Nén trọng số về số nguyên 8-bit (-127..127), mỗi cột một hệ số tỉ lệ: model nhẹ đi 4 lần, gần như không đổi kết quả."""
+    scale = np.abs(W).max(0) / 127
+    scale[scale == 0] = 1
+    return np.round(W / scale).astype(np.int8), scale.astype(np.float32)
+
+
+def export(W, b, mean, std, labels, min_prob, metrics):
+    """W (số đặc trưng, số nhãn), b (số nhãn): xác suất = softmax(((x - mean) / std) @ W + b). Trả về W sau khi nén."""
+    q, scale = quantize(W)
+    layers = [{"W": base64.b64encode(q.tobytes()).decode(), "scale": b64(scale), "b": b64(b), "shape": list(W.shape)}]
     os.makedirs(os.path.dirname(WEB_MODEL), exist_ok=True)
-    json.dump({"labels": labels, "T": T, "F": F, "mean": b64(mean), "std": b64(std),
+    json.dump({"labels": labels, "T": T, "F": F, "minProb": min_prob, "mean": b64(mean), "std": b64(std),
                "layers": layers, "metrics": metrics},
               open(WEB_MODEL, "w", encoding="utf-8"), ensure_ascii=False)
+    json.dump(labels[:-1], open(WEB_WORDS, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"Đã xuất {WEB_MODEL} ({os.path.getsize(WEB_MODEL) / 1e6:.1f} MB)")
+    return q * scale
 
 
-def write_fixture(rows, clf, mean, std):
+def softmax(z):
+    z = z - z.max(-1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(-1, keepdims=True)
+
+
+def write_fixture(rows, W, b, mean, std):
     """Lưu một video thật: điểm thô -> khung -> vector -> xác suất, để web tự kiểm tra khớp Python."""
     from sign.landmarks import video_frames
     vid = next(n for n in os.listdir(os.path.join(DATA, "videos")) if n.startswith(rows[0]["ID_video"]))
     frames, raw, aspect = video_frames(os.path.join(DATA, "videos", vid), keep_raw=True)
     vec = sequence_vector(frames)
-    probs = clf.predict_proba(((vec - mean) / std)[None])[0]
+    probs = softmax(((vec - mean) / std) @ W + b)
     os.makedirs(os.path.dirname(FIXTURE), exist_ok=True)
     json.dump({"aspect": aspect, "raw": raw[:15], "frames": frames.tolist(), "vector": vec.tolist(), "probs": probs.tolist()},
               open(FIXTURE, "w"))
 
 
-if __name__ == "__main__":
-    rows, frames, labels, y, groups = load()
-    print(f"{len(rows)} video, {len(labels)} từ, {len(set(groups))} người ra ký hiệu")
-    by_signer = list(GroupKFold(n_splits=5).split(frames, y, groups))
-    random = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=0).split(frames, y))
-    signer_acc = score(frames, y, by_signer)
-    random_acc = score(frames, y, random)
-    print(f"Độ chính xác — người lạ: {signer_acc:.1%} · chia ngẫu nhiên: {random_acc:.1%} (đoán bừa: {1/len(labels):.0%})")
+def main():
+    rows, frames, labels, y = load()
+    other = len(labels) - 1
+    signers = len(set(r["Signer"] for r in rows))
+    print(f"{len(rows)} video, {signers} người. Xét {other} từ có >= {MIN_VIDEOS} video; {(y == other).sum()} video "
+          f"của {len(set(r['Meaning'] for r in rows)) - other} từ còn lại làm 'không phải từ nào'.")
+    X, Y, V, O = build(frames, y, other)
+    print(f"Sau nhân bản: {len(X)} mẫu. Đang chấm điểm trên người lạ...")
+    E = evaluate(X, Y, V, O, y, rows, other)
 
-    X, Y = build(frames, y, copies=COPIES)
-    clf, mean, std = fit(X, Y)
-    export(clf, mean, std, labels, {"signer_independent": signer_acc, "random_split": random_acc,
-                                    "model": f"LogisticRegression C={C}", "videos": len(rows), "signers": len(set(groups))})
-    write_fixture(rows, clf, mean, std)
+    pos = E["taught"]
+    top1 = float((E["top5"][pos, 0] == y[pos]).mean())
+    top5 = float((E["top5"][pos] == y[pos, None]).any(1).mean())
+    print(f"Người lạ: đúng ngay lần đoán đầu {top1:.1%}, nằm trong 5 gợi ý đầu {top5:.1%}")
+    print(" ngưỡng  nhận đúng  nhận nhầm  bỏ sót  cử động lạ bị nhận thành chữ")
+    table = {}
+    for t in np.round(np.arange(0, 0.96, 0.05), 2):
+        table[t] = r = rates(E, y, other, t)
+        print(f"  {t:.2f}    {r['correct']:6.1%}    {r['wrong']:6.1%}   {r['missed']:6.1%}   {r['false_alarm']:6.1%}")
+    min_prob = float(next((t for t, r in table.items() if r["false_alarm"] <= MAX_FALSE), max(table)))
+    chosen = table[min_prob]
+    print(f"Chọn ngưỡng {min_prob:.2f}: " + ", ".join(f"{k} {v:.1%}" for k, v in chosen.items()))
+
+    print("Chọn từ trên toàn bộ dữ liệu rồi dạy bản cuối...")
+    keep, remap = relabel(word_accuracy(X, Y, V, O, y, rows, np.ones(len(y), bool), other, 5), other)
+    clf, mean, std = fit(X, remap[Y])
+    b = clf.intercept_ / TEMP
+    W = export(clf.coef_.T / TEMP, b, mean, std, [labels[i] for i in keep] + [OTHER], min_prob,
+               {"signer_independent": top1, "top5": top5, **chosen, "threshold": min_prob,
+                "model": f"LinearDiscriminantAnalysis lsqr shrinkage=auto, /{TEMP}", "words": len(keep),
+                "candidates": other, "videos": len(rows), "signers": signers})
+    print(f"Dạy {len(keep)}/{other} từ.")
+    write_fixture(rows, W, b, mean, std)
+
+
+if __name__ == "__main__":
+    main()
