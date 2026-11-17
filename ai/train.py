@@ -1,7 +1,8 @@
 """Dạy AI nhận ký hiệu, biết bỏ qua cử động lạ, chấm điểm trung thực, rồi xuất model cho website.
 
 1. Xét các từ có ít nhất MIN_VIDEOS video. Video các từ còn lại gộp thành nhãn "không phải từ nào" (OTHER):
-   nhờ vậy AI học được cách bỏ qua cử động không phải ký hiệu nó biết.
+   nhờ vậy AI học được cách bỏ qua cử động không phải ký hiệu nó biết. Nhãn có dấu ":" (ví dụ "vsl:mẹ"
+   trong dữ liệu ASL) luôn là OTHER: đó là ký hiệu của ngôn ngữ khác.
 2. Mỗi video -> vector (sequence_vector). Nhân bản dữ liệu: lật gương, xoay, co giãn, cắt đầu/cuối, nhiễu.
 3. Chỉ dạy từ AI học được: chấm thử trên người lạ, từ nào nhận đúng dưới KEEP_ACC thì gộp vào OTHER.
    Từ khó mà vẫn dạy thì AI đoán bừa, kéo cả hệ thống nhận nhầm.
@@ -9,10 +10,13 @@
    - từ được dạy: chia theo NGƯỜI, nên người làm ký hiệu lúc kiểm tra chưa từng xuất hiện lúc học;
    - "không phải từ nào": chia theo TỪ, nên cử động lúc kiểm tra là thứ AI chưa từng thấy (giống giơ tay bừa).
    Rồi chọn ngưỡng tự tin sao cho cử động lạ bị nhận thành chữ không quá MAX_FALSE.
-5. Dạy trên toàn bộ dữ liệu, xuất web/public/model/model.json, web/src/words.json và tests/fixtures/parity.json.
-Chạy: uv run python train.py   (khoảng 20 phút)
+5. Dạy trên toàn bộ dữ liệu, xuất web/public/model/<ngôn ngữ>.json, web/src/words/<ngôn ngữ>.json
+   và tests/fixtures/parity.json.
+Chạy: uv run python train.py       (VSL, khoảng 20 phút)
+      uv run python train.py asl   (ASL, cần chạy extract_asl.py trước)
 """
-import base64, collections, csv, json, os
+import base64, collections, csv, json, os, sys
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -22,8 +26,9 @@ from sign.features import F, T, mirror_frames, sequence_vector
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(ROOT, "data")
-WEB_MODEL = os.path.join(ROOT, "..", "web", "public", "model", "model.json")
-WEB_WORDS = os.path.join(ROOT, "..", "web", "src", "words.json")
+WEB = os.path.join(ROOT, "..", "web")
+model_path = lambda lang: os.path.join(WEB, "public", "model", f"{lang}.json")   # mỗi ngôn ngữ ký hiệu một model
+words_path = lambda lang: os.path.join(WEB, "src", "words", f"{lang}.json")      # danh sách từ cho trang Từ vựng
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "parity.json")
 rng = np.random.default_rng(0)
 
@@ -31,18 +36,26 @@ MIN_VIDEOS = 8      # chỉ xét từ có ít nhất 8 video
 KEEP_ACC = 0.4      # chỉ dạy từ AI nhận đúng >= 40% số lần khi gặp người lạ (thử 40/50/60%: 40% nhiều từ nhất, nhầm vẫn ~5%)
 TEMP = 5            # LDA hay quá tự tin: chia điểm cho TEMP để độ tự tin sát thực tế, ngưỡng mới có tác dụng
 OTHER = "_khác"     # nhãn "không phải từ nào"; web/src/model.js dùng đúng chuỗi này
-COPIES = 10         # số biến thể nhân bản cho mỗi video của từ được dạy
-OTHER_COPIES = 2    # video "không phải từ nào" đã rất nhiều nên nhân bản ít hơn
 MAX_FALSE = 0.10    # chấp nhận tối đa 10% cử động lạ bị nhận nhầm thành chữ
+
+# Mỗi ngôn ngữ ký hiệu: thư mục dữ liệu, số biến thể nhân bản (từ được dạy / "không phải từ nào"), co giãn ngang.
+SETTINGS = {
+    "vsl": dict(data=DATA, copies=10, other_copies=2, stretch=0.0),
+    # ASL: mỗi từ ~380 mẫu nên 1 biến thể là đủ; co giãn ngang ±10% vì tỉ lệ khung video gốc chỉ là ước lượng
+    "asl": dict(data=os.path.join(DATA, "asl"), copies=1, other_copies=2, stretch=0.1),
+}
+cfg = SETTINGS["vsl"]
 
 
 def load():
-    rows = list(csv.DictReader(open(os.path.join(DATA, "labels.csv"), encoding="utf-8")))
+    rows = list(csv.DictReader(open(os.path.join(cfg["data"], "labels.csv"), encoding="utf-8")))
     counts = collections.Counter(r["Meaning"] for r in rows)
-    words = sorted(w for w, n in counts.items() if n >= MIN_VIDEOS)
+    words = sorted(w for w, n in counts.items() if n >= MIN_VIDEOS and ":" not in w)
     index = {w: i for i, w in enumerate(words)}
     y = np.array([index.get(r["Meaning"], len(words)) for r in rows])  # từ không được dạy -> OTHER
-    frames = [np.load(os.path.join(DATA, "frames", r["ID_video"] + ".npy")) for r in rows]
+    paths = [os.path.join(cfg["data"], "frames", r["ID_video"] + ".npy") for r in rows]
+    with ThreadPoolExecutor(16) as ex:  # đọc song song: ASL có ~98.000 file nhỏ, đọc lần lượt mất ~15 phút
+        frames = list(ex.map(np.load, paths))
     return rows, frames, words + [OTHER], y
 
 
@@ -60,6 +73,8 @@ def augment(frames):
     x, yv = pts[..., 0].copy(), pts[..., 1].copy()
     pts[..., 0], pts[..., 1] = c * x - s * yv, s * x + c * yv
     pts *= rng.uniform(0.9, 1.1)                  # người to/nhỏ, đứng xa/gần
+    if cfg["stretch"]:                            # tỉ lệ khung hình lệch (chỉ ASL)
+        pts[..., 0] *= rng.uniform(1 - cfg["stretch"], 1 + cfg["stretch"])
     present = np.concatenate([np.ones((len(f), 7)), np.repeat(f[:, -2:] > 0, 21, axis=1)], axis=1)[..., None]
     pts += rng.normal(0, 0.01, pts.shape) * present  # tay hơi run (chỉ chỗ có tay)
     f[:, :147] = pts.reshape(len(f), 147)
@@ -70,7 +85,7 @@ def build(frames, y, other):
     """Vector của mọi video kèm các biến thể. V = video gốc của từng dòng, O = dòng đó là bản gốc (không nhân bản)."""
     X, Y, V, O = [], [], [], []
     for i, (f, label) in enumerate(zip(frames, y)):
-        for k in range(1 + (OTHER_COPIES if label == other else COPIES)):
+        for k in range(1 + cfg["other_copies" if label == other else "copies"]):
             X.append(sequence_vector(f if k == 0 else augment(f)))
             Y.append(label); V.append(i); O.append(k == 0)
     return np.array(X, np.float32), np.array(Y), np.array(V), np.array(O)
@@ -173,16 +188,16 @@ def quantize(W):
     return np.round(W / scale).astype(np.int8), scale.astype(np.float32)
 
 
-def export(W, b, mean, std, labels, min_prob, metrics):
+def export(W, b, mean, std, labels, min_prob, metrics, lang="vsl"):
     """W (số đặc trưng, số nhãn), b (số nhãn): xác suất = softmax(((x - mean) / std) @ W + b). Trả về W sau khi nén."""
     q, scale = quantize(W)
     layers = [{"W": base64.b64encode(q.tobytes()).decode(), "scale": b64(scale), "b": b64(b), "shape": list(W.shape)}]
-    os.makedirs(os.path.dirname(WEB_MODEL), exist_ok=True)
+    out = model_path(lang)
     json.dump({"labels": labels, "T": T, "F": F, "minProb": min_prob, "mean": b64(mean), "std": b64(std),
                "layers": layers, "metrics": metrics},
-              open(WEB_MODEL, "w", encoding="utf-8"), ensure_ascii=False)
-    json.dump(labels[:-1], open(WEB_WORDS, "w", encoding="utf-8"), ensure_ascii=False)
-    print(f"Đã xuất {WEB_MODEL} ({os.path.getsize(WEB_MODEL) / 1e6:.1f} MB)")
+              open(out, "w", encoding="utf-8"), ensure_ascii=False)
+    json.dump(labels[:-1], open(words_path(lang), "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"Đã xuất {out} ({os.path.getsize(out) / 1e6:.1f} MB)")
     return q * scale
 
 
@@ -204,7 +219,9 @@ def write_fixture(rows, W, b, mean, std):
               open(FIXTURE, "w"))
 
 
-def main():
+def main(lang="vsl"):
+    global cfg
+    cfg = SETTINGS[lang]
     rows, frames, labels, y = load()
     other = len(labels) - 1
     signers = len(set(r["Signer"] for r in rows))
@@ -234,10 +251,11 @@ def main():
     W = export(clf.coef_.T / TEMP, b, mean, std, [labels[i] for i in keep] + [OTHER], min_prob,
                {"signer_independent": top1, "top5": top5, **chosen, "threshold": min_prob,
                 "model": f"LinearDiscriminantAnalysis lsqr shrinkage=auto, /{TEMP}", "words": len(keep),
-                "candidates": other, "videos": len(rows), "signers": signers})
+                "candidates": other, "videos": len(rows), "signers": signers}, lang)
     print(f"Dạy {len(keep)}/{other} từ.")
-    write_fixture(rows, W, b, mean, std)
+    if lang == "vsl":  # bài đối chiếu web/Python dùng một video VieSign thật
+        write_fixture(rows, W, b, mean, std)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else "vsl")

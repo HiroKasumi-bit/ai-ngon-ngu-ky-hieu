@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3FAF9">
   <meta name="description" content="Lời Tay: phiên dịch ngôn ngữ ký hiệu Việt Nam ngay trên điện thoại. Dự án khởi nghiệp nhóm 11A4, THPT Lê Quý Đôn.">
-  <title>Lời Tay · Phiên dịch ngôn ngữ ký hiệu</title>
+  <title data-t="meta.title">Lời Tay · Phiên dịch ngôn ngữ ký hiệu</title>
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,32 +27,41 @@
   </svg>
 
   <header class="bar">
-    <a class="brand" href="#chat" aria-label="Lời Tay, về trang trò chuyện">
+    <a class="brand" href="#chat" aria-label="Lời Tay, về trang trò chuyện" data-t-attr="aria-label:brand.home">
       <img src="/logo.svg" alt="" width="40" height="34">
-      <span><b>Lời Tay</b><small>Phiên dịch ngôn ngữ ký hiệu</small></span>
+      <span><b translate="no">Lời Tay</b><small data-t="brand.sub">Phiên dịch ngôn ngữ ký hiệu</small></span>
     </a>
-    <span class="beta">Bản thử nghiệm</span>
+    <div class="switches">
+      <div class="seg" role="group" id="signSwitch" aria-label="Ngôn ngữ ký hiệu" data-t-attr="aria-label:switch.sign">
+        <button type="button" data-sign="vsl" aria-pressed="true">VSL</button>
+        <button type="button" data-sign="asl" aria-pressed="false">ASL</button>
+      </div>
+      <div class="seg" role="group" aria-label="Ngôn ngữ giao diện" data-t-attr="aria-label:switch.ui">
+        <button type="button" data-ui="vi" lang="vi" title="Tiếng Việt" aria-pressed="true">VI</button>
+        <button type="button" data-ui="en" lang="en" title="English" aria-pressed="false">EN</button>
+      </div>
+    </div>
   </header>
-  <nav class="tabs" aria-label="Chuyển trang">
-    <a href="#chat" data-tab="chat"><svg><use href="#i-chat"/></svg>Trò chuyện</a>
-    <a href="#video" data-tab="video-view"><svg><use href="#i-film"/></svg>Dịch video</a>
-    <a href="#vocab" data-tab="vocab"><svg><use href="#i-book"/></svg>Từ vựng</a>
+  <nav class="tabs" aria-label="Chuyển trang" data-t-attr="aria-label:nav">
+    <a href="#chat" data-tab="chat"><svg><use href="#i-chat"/></svg><span data-t="tab.chat">Trò chuyện</span></a>
+    <a href="#video" data-tab="video-view"><svg><use href="#i-film"/></svg><span data-t="tab.video">Dịch video</span></a>
+    <a href="#vocab" data-tab="vocab"><svg><use href="#i-book"/></svg><span data-t="tab.vocab">Từ vựng</span></a>
   </nav>
 
   <main>
     <!-- TRANG 1: TRÒ CHUYỆN HAI CHIỀU -->
-    <section class="view" id="chat" aria-label="Trò chuyện">
+    <section class="view" id="chat" aria-label="Trò chuyện" data-t-attr="aria-label:tab.chat">
       <div class="col">
         <div class="cam" id="cam">
           <video id="video" playsinline muted></video>
           <canvas id="overlay"></canvas>
           <div class="cam-off" id="camOff">
             <img src="/logo.svg" alt="" width="72" height="62">
-            <p id="camMsg">Ra ký hiệu trước camera. Lời Tay đổi thành chữ và đọc to cho người đối diện.</p>
-            <button class="btn primary" id="camStart"><svg><use href="#i-cam"/></svg>Bật camera</button>
-            <small>Thử: khẩu trang, điện thoại, đúng, sai… <a href="#vocab">Xem đủ <span data-nwords>183</span> từ</a><br>Hình ảnh chỉ xử lý trên máy bạn.</small>
+            <p id="camMsg" data-t="cam.msg">Ra ký hiệu trước camera. Lời Tay đổi thành chữ và đọc to cho người đối diện.</p>
+            <button class="btn primary" id="camStart"><svg><use href="#i-cam"/></svg><span data-t="cam.start">Bật camera</span></button>
+            <small data-t-html="cam.try">Thử: khẩu trang, điện thoại, đúng, sai… <a href="#vocab">Xem đủ 183 từ</a><br>Hình ảnh chỉ xử lý trên máy bạn.</small>
           </div>
-          <p class="cam-hint" id="camHint" hidden>Đưa tay vào khung hình</p>
+          <p class="cam-hint" id="camHint" hidden data-t="cam.hint">Đưa tay vào khung hình</p>
           <div class="live" id="live" hidden>
             <span id="liveWord">…</span>
             <span class="meter" aria-hidden="true"><i id="liveBar"></i></span>
@@ -61,40 +70,40 @@
 
         <div class="card draft">
           <div class="row">
-            <span class="label">Câu đang ghép</span>
+            <span class="label" data-t="draft.label">Câu đang ghép</span>
             <span class="tools">
-              <button class="icon-btn" id="undo" aria-label="Xoá từ cuối" title="Xoá từ cuối"><svg><use href="#i-undo"/></svg></button>
-              <button class="icon-btn" id="clear" aria-label="Xoá hết" title="Xoá hết"><svg><use href="#i-x"/></svg></button>
+              <button class="icon-btn" id="undo" aria-label="Xoá từ cuối" title="Xoá từ cuối" data-t-attr="aria-label:draft.undo;title:draft.undo"><svg><use href="#i-undo"/></svg></button>
+              <button class="icon-btn" id="clear" aria-label="Xoá hết" title="Xoá hết" data-t-attr="aria-label:draft.clear;title:draft.clear"><svg><use href="#i-x"/></svg></button>
             </span>
           </div>
-          <p class="words" id="draft" aria-live="polite"><span class="placeholder">Từ nhận được sẽ hiện ở đây</span></p>
-          <button class="btn primary wide" id="send" disabled><svg><use href="#i-send"/></svg>Gửi và đọc to</button>
+          <p class="words" id="draft" aria-live="polite"><span class="placeholder" data-t="draft.empty">Từ nhận được sẽ hiện ở đây</span></p>
+          <button class="btn primary wide" id="send" disabled><svg><use href="#i-send"/></svg><span data-t="draft.send">Gửi và đọc to</span></button>
         </div>
       </div>
 
       <div class="col talk">
         <div class="card thread-card">
-          <span class="label">Cuộc trò chuyện</span>
+          <span class="label" data-t="thread.label">Cuộc trò chuyện</span>
           <ol class="thread" id="thread" aria-live="polite">
-            <li class="empty">Câu bạn gửi và lời người đối diện nói sẽ hiện ở đây, chữ to, dễ đọc.</li>
+            <li class="empty" data-t="thread.empty">Câu bạn gửi và lời người đối diện nói sẽ hiện ở đây, chữ to, dễ đọc.</li>
           </ol>
         </div>
         <div class="card listen">
           <p class="interim" id="interim">Người đối diện bấm micro rồi nói</p>
-          <button class="mic" id="mic" aria-label="Người đối diện bấm để nói"><svg><use href="#i-mic"/></svg></button>
+          <button class="mic" id="mic" aria-label="Người đối diện bấm để nói" data-t-attr="aria-label:mic.label"><svg><use href="#i-mic"/></svg></button>
         </div>
       </div>
     </section>
 
     <!-- TRANG 2: DỊCH VIDEO -->
-    <section class="view" id="video-view" aria-label="Dịch video" hidden>
+    <section class="view" id="video-view" aria-label="Dịch video" hidden data-t-attr="aria-label:tab.video">
       <div class="card pad narrow">
-        <h1>Dịch video</h1>
-        <p class="lead">Chọn video có người ra ký hiệu. Lời Tay xem từng khung hình và liệt kê các từ nhận được.</p>
+        <h1 data-t="video.title">Dịch video</h1>
+        <p class="lead" data-t="video.lead">Chọn video có người ra ký hiệu. Lời Tay xem từng khung hình và liệt kê các từ nhận được.</p>
         <label class="drop" for="file">
           <svg><use href="#i-up"/></svg>
-          <b>Chọn video</b>
-          <span>MP4, MOV hoặc WEBM. Video chỉ xử lý trên máy bạn.</span>
+          <b data-t="video.pick">Chọn video</b>
+          <span data-t="video.formats">MP4, MOV hoặc WEBM. Video chỉ xử lý trên máy bạn.</span>
         </label>
         <input type="file" id="file" accept="video/*" hidden>
         <div class="progress" id="vprog" hidden><i></i></div>
@@ -104,20 +113,19 @@
     </section>
 
     <!-- TRANG 3: TỪ VỰNG -->
-    <section class="view" id="vocab" aria-label="Từ vựng" hidden>
+    <section class="view" id="vocab" aria-label="Từ vựng" hidden data-t-attr="aria-label:tab.vocab">
       <div class="card pad narrow">
-        <h1>Lời Tay hiểu được gì?</h1>
-        <p class="lead">Bản thử nghiệm nhận diện <b data-nwords>183</b> ký hiệu ngôn ngữ ký hiệu Việt Nam. Ra từng ký hiệu rõ ràng, sau mỗi từ hạ tay xuống một chút. Cử động không phải ký hiệu sẽ được bỏ qua.</p>
+        <h1 data-t="vocab.title">Lời Tay hiểu được gì?</h1>
+        <p class="lead" data-t-html="vocab.lead">Bản thử nghiệm nhận diện <b>183</b> ký hiệu ngôn ngữ ký hiệu Việt Nam. Ra từng ký hiệu rõ ràng, sau mỗi từ hạ tay xuống một chút. Cử động không phải ký hiệu sẽ được bỏ qua.</p>
         <label class="search">
           <svg><use href="#i-search"/></svg>
-          <input type="search" id="vsearch" placeholder="Tìm từ, ví dụ: bệnh viện" autocomplete="off" aria-label="Tìm từ">
+          <input type="search" id="vsearch" placeholder="Tìm từ, ví dụ: bệnh viện" autocomplete="off" aria-label="Tìm từ" data-t-attr="placeholder:vocab.search;aria-label:vocab.searchLabel">
         </label>
         <p class="note" id="vcount" aria-live="polite"></p>
         <div id="groups"></div>
         <p class="credit">
-          Dữ liệu huấn luyện: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> của Cap Pham Dinh Thang (giấy phép CC BY 4.0).
-          Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>
-          Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.
+          <span id="creditData">Dữ liệu huấn luyện: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> của Cap Pham Dinh Thang (giấy phép CC BY 4.0).</span>
+          <span data-t-html="credit.rest">Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.</span>
         </p>
       </div>
     </section>

@@ -1,10 +1,14 @@
-"""Kiểm tra model.json xuất ra đúng: tự tính lại bằng numpy phải ra đúng xác suất của model gốc."""
+"""Kiểm tra model xuất ra đúng: tự tính lại bằng numpy phải ra đúng xác suất của model gốc."""
 import base64, json, os
 
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL = os.path.join(ROOT, "..", "web", "public", "model", "model.json")
+WEB = os.path.join(ROOT, "..", "web")
+model_path = lambda lang: os.path.join(WEB, "public", "model", f"{lang}.json")
+words_path = lambda lang: os.path.join(WEB, "src", "words", f"{lang}.json")
+LANGS = [lang for lang in ("vsl", "asl") if os.path.exists(model_path(lang))]  # mỗi ngôn ngữ ký hiệu một model
+MODEL = model_path("vsl")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "parity.json")
 
 
@@ -31,18 +35,21 @@ def test_export_roundtrip():
 
 def test_labels_end_with_not_a_sign_and_match_vocab_page():
     """Nhãn cuối là "không phải từ nào"; trang Từ vựng liệt kê đúng các từ còn lại; có ngưỡng tự tin."""
-    m = json.load(open(MODEL, encoding="utf-8"))
-    words = json.load(open(os.path.join(ROOT, "..", "web", "src", "words.json"), encoding="utf-8"))
-    assert m["labels"][-1] == "_khác"
-    assert m["labels"][:-1] == words
-    assert 0 <= m["minProb"] < 1
+    assert "vsl" in LANGS
+    for lang in LANGS:
+        m = json.load(open(model_path(lang), encoding="utf-8"))
+        words = json.load(open(words_path(lang), encoding="utf-8"))
+        assert m["labels"][-1] == "_khác"
+        assert m["labels"][:-1] == words
+        assert 0 <= m["minProb"] < 1
 
 
 def test_weights_are_int8_so_phones_download_little():
     """389 từ x 2024 số: để số thực 32-bit thì model nặng ~4 MB; 8-bit thì ~1 MB."""
-    m = json.load(open(MODEL, encoding="utf-8"))
-    for layer in m["layers"]:
-        rows, cols = layer["shape"]
-        assert len(base64.b64decode(layer["W"])) == rows * cols  # 1 byte mỗi trọng số
-        assert len(f32(layer["scale"])) == cols
-    assert os.path.getsize(MODEL) < 2e6
+    for lang in LANGS:
+        m = json.load(open(model_path(lang), encoding="utf-8"))
+        for layer in m["layers"]:
+            rows, cols = layer["shape"]
+            assert len(base64.b64decode(layer["W"])) == rows * cols  # 1 byte mỗi trọng số
+            assert len(f32(layer["scale"])) == cols
+        assert os.path.getsize(model_path(lang)) < 2e6

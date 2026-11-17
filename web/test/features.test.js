@@ -6,7 +6,7 @@ import { predict } from '../src/model.js'
 
 // Dữ liệu đối chiếu do ai/train.py xuất ra: cùng một video, Python tính ra những con số này.
 const fx = JSON.parse(readFileSync(new URL('../../ai/tests/fixtures/parity.json', import.meta.url)))
-const model = JSON.parse(readFileSync(new URL('../public/model/model.json', import.meta.url)))
+const model = JSON.parse(readFileSync(new URL('../public/model/vsl.json', import.meta.url)))
 const close = (a, b, tol = 1e-4) => {
   assert.equal(a.length, b.length)
   for (let i = 0; i < a.length; i++) assert.ok(Math.abs(a[i] - b[i]) <= tol, `index ${i}: ${a[i]} vs ${b[i]}`)

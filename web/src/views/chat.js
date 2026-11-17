@@ -2,8 +2,11 @@
 // Người Điếc: ký hiệu trước camera -> từ hiện ra -> ghép câu -> "Gửi và đọc to".
 // Người nghe: bấm micro, nói -> chữ hiện ra trong khung trò chuyện.
 import { gsap } from 'gsap'
+import { t } from '../i18n.js'
 import { createRecognizer } from '../recognizer.js'
-import { toSentence, wordLabel } from '../sentence.js'
+import { toSentence } from '../sentence.js'
+import { onSettings, settings } from '../settings.js'
+import { wordName } from '../signs.js'
 import { createListener, speak } from '../speech.js'
 
 const $ = id => document.getElementById(id)
@@ -11,22 +14,23 @@ const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function initChat(getEngine) {
   const cam = $('cam'), video = $('video'), overlay = $('overlay'), ctx = overlay.getContext('2d')
-  let words = []
+  let words = [] // mỗi từ nhớ cả ngôn ngữ ký hiệu: { sign, label }
+  const name = w => wordName(w.sign, w.label, settings.ui)
 
   // ---------- câu nháp ----------
   function renderDraft(popLast = false) {
     const box = $('draft')
-    box.innerHTML = words.length ? '' : '<span class="placeholder">Từ nhận được sẽ hiện ở đây</span>'
-    words.forEach(w => box.insertAdjacentHTML('beforeend', `<span class="word">${wordLabel(w)}</span>`))
+    box.innerHTML = words.length ? '' : `<span class="placeholder">${t(settings.ui, 'draft.empty')}</span>`
+    words.forEach(w => box.insertAdjacentHTML('beforeend', `<span class="word">${name(w)}</span>`))
     $('send').disabled = !words.length
     if (popLast && !calm) gsap.from(box.lastElementChild, { scale: 0.6, opacity: 0, duration: 0.35, ease: 'back.out(2.2)' })
   }
   $('undo').onclick = () => { words.pop(); renderDraft() }
   $('clear').onclick = () => { words = []; renderDraft() }
   $('send').onclick = () => {
-    const text = toSentence(words)
-    addMessage('me', 'Bạn · ký hiệu', text)
-    speak(text)
+    const text = toSentence(words.map(name), settings.ui)
+    addMessage('me', t(settings.ui, 'who.me'), text)
+    speak(text, settings.ui)
     words = []
     renderDraft()
   }
@@ -46,48 +50,50 @@ export function initChat(getEngine) {
 
   // Chỉ khi chạy thử trên máy: cho phép bơm từ/tin nhắn để kiểm tra giao diện
   if (import.meta.env.DEV) {
-    window.__loiTayChat = { addWord: w => { words.push(w); renderDraft(true) }, addMessage, send: () => $('send').click() }
+    window.__loiTayChat = { addWord: (label, sign = settings.sign) => { words.push({ sign, label }); renderDraft(true) }, addMessage, send: () => $('send').click() }
     if (new URLSearchParams(location.search).has('showcase')) { // ảnh chụp minh hoạ: điền sẵn một đoạn hội thoại mẫu
       addMessage('me', 'Bạn · ký hiệu', 'Trạm y tế.')
       addMessage('them', 'Người đối diện · giọng nói', 'Bạn cần đến trạm y tế à? Đi thẳng đường này nhé.')
-      words = ['khó_chịu', 'sợ_hãi']; renderDraft()
+      words = ['khó_chịu', 'sợ_hãi'].map(label => ({ sign: 'vsl', label })); renderDraft()
     }
   }
 
   // ---------- micro cho người nghe ----------
   const interim = $('interim'), mic = $('mic')
-  const idle = 'Người đối diện bấm micro rồi nói'
+  const say = key => t(settings.ui, key)
+  const idle = () => { interim.textContent = say('mic.idle'); interim.classList.remove('on') }
   const listener = createListener({
-    onInterim: t => { interim.textContent = t || 'Đang nghe…'; interim.classList.add('on') },
-    onFinal: t => { interim.textContent = idle; interim.classList.remove('on'); addMessage('them', 'Người đối diện · giọng nói', t) },
+    onInterim: text => { interim.textContent = text || say('mic.listening'); interim.classList.add('on') },
+    onFinal: text => { idle(); addMessage('them', say('who.them'), text) },
     onState: (on, err) => {
       mic.classList.toggle('on', on)
-      if (on) { interim.textContent = 'Đang nghe…'; interim.classList.add('on') }
-      else if (err === 'not-allowed') interim.textContent = 'Chưa được phép dùng micro. Bấm biểu tượng ổ khoá trên thanh địa chỉ để cho phép.'
-      else if (err) interim.textContent = 'Chưa nghe rõ, bấm micro để thử lại.'
-      else if (interim.textContent === 'Đang nghe…') { interim.textContent = idle; interim.classList.remove('on') }
+      if (on) { interim.textContent = say('mic.listening'); interim.classList.add('on') }
+      else if (err === 'not-allowed') interim.textContent = say('mic.denied')
+      else if (err) interim.textContent = say('mic.retry')
+      else if (interim.textContent === say('mic.listening')) idle()
     },
   })
-  if (listener.supported) mic.onclick = () => (mic.classList.contains('on') ? listener.stop() : listener.start())
-  else { mic.hidden = true; interim.textContent = 'Trình duyệt này chưa nghe được giọng nói. Hãy mở bằng Chrome hoặc Edge.' }
+  if (listener.supported) mic.onclick = () => (mic.classList.contains('on') ? listener.stop() : listener.start(settings.ui))
+  else mic.hidden = true
+  const micIdle = () => { if (!listener.supported) interim.textContent = say('mic.unsupported'); else if (!mic.classList.contains('on')) idle() }
+  micIdle()
+  onSettings(() => { renderDraft(); micIdle() }) // đổi ngôn ngữ giao diện: viết lại câu nháp, dòng micro
 
   // ---------- camera + nhận diện ----------
   const demo = new URLSearchParams(location.search).get('demo') // ?demo=/demo/x.mp4: dùng video thay camera (để kiểm thử)
   $('camStart').onclick = async () => {
     const msg = $('camMsg'), btn = $('camStart')
     btn.disabled = true
-    msg.textContent = 'Đang tải AI nhận diện… (lần đầu khoảng 30 MB, các lần sau nhanh hơn)'
+    msg.textContent = t(settings.ui, 'cam.loading')
     try {
-      const [{ model, tracker }] = await Promise.all([getEngine(), startSource()])
+      const [engine] = await Promise.all([getEngine(), startSource()])
       $('camOff').hidden = true
       $('live').hidden = false
-      run(model, tracker)
+      run(engine)
     } catch (err) {
       console.error('[Lời Tay] không khởi động được:', err)
       btn.disabled = false
-      msg.textContent = err?.name === 'NotAllowedError'
-        ? 'Bạn chưa cho phép dùng camera. Bấm biểu tượng ổ khoá trên thanh địa chỉ, cho phép camera rồi bấm lại.'
-        : err?.name === 'NotFoundError' ? 'Không tìm thấy camera trên máy này.' : 'Chưa khởi động được. Kiểm tra mạng rồi thử lại.'
+      msg.textContent = t(settings.ui, err?.name === 'NotAllowedError' ? 'cam.denied' : err?.name === 'NotFoundError' ? 'cam.none' : 'cam.fail')
     }
   }
 
@@ -105,8 +111,16 @@ export function initChat(getEngine) {
     if (document.visibilityState === 'visible' && video.paused && (video.srcObject || video.src)) video.play().catch(() => {})
   })
 
-  function run(model, tracker) {
-    const rec = createRecognizer(model)
+  function run({ model, tracker, sign }) {
+    let rec = createRecognizer(model)
+    // Đổi ngôn ngữ ký hiệu khi camera đang chạy: nạp "bộ não" mới, không cần bật lại camera.
+    onSettings(async s => {
+      if (s.sign === sign) return
+      const next = await getEngine()
+      if (next.sign !== settings.sign) return // người dùng đã đổi tiếp trong lúc tải
+      sign = next.sign
+      rec = createRecognizer(next.model)
+    })
     const dbg = import.meta.env.DEV ? (window.__loiTay = { frames: 0, withHands: 0, events: [] }) : null
     const liveWord = $('liveWord'), liveBar = $('liveBar'), hint = $('camHint')
     const view = $('chat')
@@ -118,10 +132,10 @@ export function initChat(getEngine) {
         if (dbg) { dbg.frames++; dbg.withHands += hands > 0; dbg.current = rec.current && { label: rec.current.label, prob: rec.current.prob }; if (hit) dbg.events.push(hit) }
         hint.hidden = hands > 0
         const cur = rec.current
-        liveWord.textContent = hands && cur ? wordLabel(cur.label) : '…'
+        liveWord.textContent = hands && cur ? wordName(sign, cur.label, settings.ui) : '…'
         liveBar.style.width = `${hands && cur ? Math.round(cur.prob * 100) : 0}%`
         draw(landmarks)
-        if (hit) { words.push(hit.word); renderDraft(true) }
+        if (hit) { words.push({ sign, label: hit.word }); renderDraft(true) }
       }
       video.requestVideoFrameCallback ? video.requestVideoFrameCallback(tick) : requestAnimationFrame(tick)
     }

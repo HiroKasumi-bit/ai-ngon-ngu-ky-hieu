@@ -4,8 +4,9 @@ export const wordLabel = w => w.replaceAll('_', ' ')
 // Bỏ dấu và viết thường, để tìm "benh vien" vẫn ra "bệnh viện".
 export const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()
 
-export function toSentence(words) {
-  if (!words.length) return ''
-  const s = words.map(wordLabel).join(' ')
-  return s[0].toLocaleUpperCase('vi') + s.slice(1) + '.'
+// names: tên các từ đã theo ngôn ngữ giao diện (ui = 'vi' | 'en').
+export function toSentence(names, ui = 'vi') {
+  if (!names.length) return ''
+  const s = names.join(' ')
+  return s[0].toLocaleUpperCase(ui) + s.slice(1) + '.'
 }

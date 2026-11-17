@@ -1,4 +1,4 @@
-// "Bộ não" AI: model tuyến tính (LDA) train bằng ai/train.py, trọng số lưu trong model.json.
+// "Bộ não" AI: model tuyến tính (LDA) train bằng ai/train.py, trọng số lưu trong public/model/<vsl|asl>.json.
 // Tính toán chỉ là nhân ma trận + cộng + softmax, nên không cần thư viện AI nào.
 
 // Nhãn "không phải từ nào": AI học nó từ video của các từ nó không dạy, để biết bỏ qua cử động bừa.
@@ -29,7 +29,7 @@ function decode(model) {
   return model
 }
 
-export async function loadModel(url = '/model/model.json') {
+export async function loadModel(url) {
   return decode(await (await fetch(url)).json())
 }
 

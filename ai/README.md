@@ -1,6 +1,6 @@
-# Phần AI: dạy máy hiểu ngôn ngữ ký hiệu Việt Nam
+# Phần AI: dạy máy hiểu ngôn ngữ ký hiệu
 
-Thư mục này dạy AI nhận ra **183 ký hiệu ngôn ngữ ký hiệu Việt Nam**, đồng thời **bỏ qua cử động không phải ký hiệu nó biết**, rồi xuất "bộ não" AI cho website dùng.
+Thư mục này dạy AI nhận ra **183 ký hiệu ngôn ngữ ký hiệu Việt Nam** (VSL, ngôn ngữ chính) và **112 ký hiệu ngôn ngữ ký hiệu Mỹ** (ASL), đồng thời **bỏ qua cử động không phải ký hiệu nó biết**, rồi xuất "bộ não" AI cho website dùng. Mỗi ngôn ngữ một bộ não riêng, cùng một cách tính.
 
 ## AI hoạt động thế nào
 
@@ -20,7 +20,7 @@ Video ký hiệu ──► MediaPipe chấm điểm ──► 149 con số mỗi
    - App chỉ hiện chữ khi AI đoán ra một từ thật **và** đủ tự tin (từ 45% trở lên). Còn lại thì bỏ qua.
    - Trọng số được nén về số nguyên 8-bit, nên cả bộ não chỉ nặng 0,5 MB.
 
-## Dữ liệu
+## Dữ liệu VSL
 
 - Lấy từ **VieSign-10K** của tác giả Cap Pham Dinh Thang, đăng trên Zenodo (https://zenodo.org/records/23610105), giấy phép **CC BY 4.0**. Giấy phép này cho dùng cả vào mục đích thương mại, miễn là ghi nguồn.
 - Cả gói có 7.664 video, 1.182 từ, 57 người. Nhưng đa số từ chỉ có 3–4 video.
@@ -30,7 +30,7 @@ Video ký hiệu ──► MediaPipe chấm điểm ──► 149 con số mỗi
   3. Video của tất cả các từ không dạy (999 từ) dùng làm ví dụ cho nhãn "không phải từ nào".
 - **Nhân bản dữ liệu:** từ mỗi video, máy tạo thêm 10 biến thể: lật gương (để AI hiểu cả người thuận tay trái), xoay nhẹ, to nhỏ, cắt đầu cuối, tay hơi run.
 
-## Độ chính xác (số thật)
+## Độ chính xác VSL (số thật)
 
 Kết quả lần train ngày 17/11/2026, chấm trên **người lạ**: người làm ký hiệu lúc kiểm tra chưa từng xuất hiện lúc AI học. Bước chọn từ cũng làm lại trong mỗi lần chấm và chỉ dựa trên dữ liệu học, để con số không bị đẹp giả.
 
@@ -59,7 +59,46 @@ App **ít khi nói sai, nhưng hay bỏ sót**. Nếu không thấy chữ hiện
 
 **Muốn chính xác hơn:** cần nhiều video hơn cho mỗi từ (VSL400, hoặc nhóm tự thu), nhất là các từ khám bệnh.
 
-Số mới nhất luôn nằm ở `metrics` trong `web/public/model/model.json`.
+Số mới nhất luôn nằm ở `metrics` trong `web/public/model/vsl.json` và `asl.json`.
+
+## Ngôn ngữ ký hiệu Mỹ (ASL)
+
+**Dữ liệu:** bộ Google Isolated Sign Language Recognition trên Kaggle (cuộc thi `asl-signs`), do Deaf Professional Arts Network và Georgia Institute of Technology thu, giấy phép **CC BY 4.0**. Có 94.477 mẫu, 250 từ, 21 người, quay bằng điện thoại. Bộ này không có video, chỉ có điểm khớp đã chấm sẵn bằng MediaPipe Holistic (bản cũ của MediaPipe).
+
+**Đổi sang dạng app dùng** (`extract_asl.py`):
+- Mỗi khung có 543 điểm (mặt, hai tay, người), được đổi thành 149 con số giống hệt bản VSL.
+- Dữ liệu không ghi tỉ lệ khung hình của video gốc, nên máy ước lượng cho từng người: so tỉ lệ cơ thể (khoảng mũi–vai chia bề rộng vai) với VieSign, nơi đã biết tỉ lệ khung. Kết quả 0,55–0,78 (điện thoại quay dọc), lưu ở `data/asl/aspect.json`.
+- Lúc dạy, máy kéo giãn ngang ngẫu nhiên ±10%, để AI không phụ thuộc vào con số ước lượng.
+
+**Dạy bằng điểm Holistic, chạy bằng điểm của web có ổn không?** Web dùng MediaPipe Tasks, không phải Holistic. Đã thử trên VSL (183 từ, một phần kiểm tra, khoảng 480 video):
+
+| Dạy bằng | Thử bằng | Đúng ngay lần đầu |
+|---|---|---|
+| Tasks | Tasks | 74,2% |
+| Holistic | Tasks | 74,4% |
+| Holistic | Holistic | 70,9% |
+
+Chênh lệch không đáng kể, nên dạy bằng dữ liệu Holistic vẫn dùng được trên web.
+
+**Nhãn "không phải từ nào":** dùng 6.837 video VieSign, chấm lại bằng Holistic (`extract_holistic.py`) cho cùng kiểu với dữ liệu ASL. Đây là ký hiệu thật nhưng không phải ASL, nên AI phải học cách bỏ qua.
+- Bỏ ra 827 video của các từ cùng nghĩa với một từ ASL (mắt, uống, ngủ…), vì ký hiệu hai nước cho các từ này thường giống nhau.
+- Đã thử cả khi giữ và khi bỏ các video này: kết quả gần như nhau (đúng ngay lần đầu 57,2% và 57,3%).
+
+**Kết quả** (18/11/2026, chấm trên người lạ, cách chấm giống VSL): dạy **112/250 từ**.
+
+| Khi bắt buộc chọn 1 trong 112 từ | Kết quả |
+|---|---|
+| Đoán đúng ngay lần đầu | **57,3%** |
+| Từ đúng nằm trong 5 gợi ý đầu | 78,2% |
+
+Khi chạy thật, app chỉ hiện chữ lúc AI đủ tự tin (ngưỡng 0,20, chọn sao cho ký hiệu lạ bị nhận thành chữ không quá 10%):
+
+| Người dùng làm | Nhận đúng | Nhận nhầm sang từ khác | Không hiện gì |
+|---|---|---|---|
+| Một trong 112 từ | **23,2%** | 3,6% | 73,1% |
+| Ký hiệu VSL của từ không có trong ASL | — | **9,1%** bị nhận thành chữ | 90,9% |
+
+**Vì sao kém VSL dù nhiều dữ liệu hơn:** LDA chỉ chia các từ bằng "đường thẳng". Thử 30 mẫu mà AI **đã được học**, nó vẫn chỉ đoán đúng 16. Vậy kiểu AI này đã hết sức, không phải thiếu dữ liệu. Bước tiếp theo nên thử mạng nơ-ron: phần web đã chạy được bộ não nhiều lớp.
 
 ## Các file
 
@@ -69,7 +108,9 @@ Số mới nhất luôn nằm ở `metrics` trong `web/public/model/model.json`.
 | `sign/landmarks.py` | Cho máy "xem" một video bằng MediaPipe, rồi đổi ra các con số. |
 | `sign/features.py` | Bộ đo cử chỉ. File `web/src/features.js` là bản dịch y hệt sang JavaScript. |
 | `extract_all.py` | Xem toàn bộ video, chạy song song nhiều nhân CPU. Với 7.664 video mất khoảng 2 giờ. |
-| `train.py` | Chọn từ AI học được, nhân bản dữ liệu, dạy LDA, chấm điểm trung thực, chọn ngưỡng tự tin. Xuất `model.json` và `web/src/words.json` (danh sách cho trang Từ vựng). Mất khoảng 20 phút. |
+| `train.py` | Chọn từ AI học được, nhân bản dữ liệu, dạy LDA, chấm điểm trung thực, chọn ngưỡng tự tin. Xuất `web/public/model/<vsl\|asl>.json` và `web/src/words/<vsl\|asl>.json` (danh sách cho trang Từ vựng). Mỗi ngôn ngữ mất khoảng 20 phút. |
+| `extract_holistic.py` | Chấm lại mọi video VieSign bằng MediaPipe Holistic (cùng kiểu với dữ liệu ASL), làm nhãn "không phải từ nào" cho ASL. Khoảng 2 giờ. |
+| `extract_asl.py` | Đổi dữ liệu ASL của Google sang 149 số mỗi khung, ước lượng tỉ lệ khung từng người, thêm video VieSign làm "không phải từ nào". |
 | `tests/` | Kiểm thử tự động, gồm cả bài đối chiếu để bản web và bản Python tính ra cùng một kết quả. |
 
 ## Chạy lại từ đầu
@@ -82,4 +123,13 @@ curl -L -o models/pose_landmarker_lite.task https://storage.googleapis.com/media
 uv run python extract_all.py
 uv run python train.py
 uv run pytest -q
+```
+
+ASL (cần tài khoản Kaggle, và phải bấm đồng ý luật cuộc thi `asl-signs` trên trang Kaggle trước; gói nặng 37 GB):
+
+```bash
+uvx --with six kaggle competitions download -c asl-signs -p data/asl
+uv run --no-project --python 3.12 --with mediapipe==0.10.14 --with opencv-python --with "numpy<2" python extract_holistic.py
+uv run python extract_asl.py
+uv run python train.py asl
 ```

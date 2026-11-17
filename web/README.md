@@ -14,6 +14,7 @@ Sau đó mở địa chỉ mà Vite in ra màn hình (thường là http://local
 - **Camera** chỉ chạy trên `localhost` hoặc trang `https`.
 - **Micro nghe giọng nói** chạy tốt nhất trên Chrome hoặc Edge.
 - **Mẹo khi trình bày:** ra từng ký hiệu rõ ràng, sau mỗi từ **hạ tay xuống** một chút để app chốt từ.
+- **Đổi ngôn ngữ:** hai nút ở góc trên. **VSL | ASL** chọn ngôn ngữ ký hiệu (Việt Nam hoặc Mỹ), **VI | EN** chọn chữ trên giao diện. Lựa chọn được nhớ cho lần sau. Có thể mở thẳng bằng địa chỉ, ví dụ `?sign=asl&ui=en`.
 - **Thử khi không có camera:** đặt một video ký hiệu vào `public/demo/` (thư mục này không đưa lên git), rồi mở `http://localhost:5173/?demo=/demo/ten-video.mp4`. Website sẽ dùng video thay cho camera.
 
 ## Kiểm thử
@@ -22,7 +23,7 @@ Sau đó mở địa chỉ mà Vite in ra màn hình (thường là http://local
 npm test
 ```
 
-Lệnh này chạy 3 nhóm kiểm thử:
+Lệnh này chạy 4 nhóm kiểm thử:
 - **Đối chiếu với Python:** bộ đo cử chỉ và bộ não trên web phải ra **cùng con số** với bản Python (`ai/`).
 - **Bộ nhận diện liên tục:**
   - không có tay thì không ra từ;
@@ -31,28 +32,37 @@ Lệnh này chạy 3 nhóm kiểm thử:
   - cử động thoáng qua bị bỏ qua;
   - AI đoán "không phải từ nào" hoặc chưa đủ tự tin thì không hiện gì.
 - **Ghép câu và tìm từ** (gõ không dấu vẫn tìm được).
+- **Hai ngôn ngữ giao diện:**
+  - tiếng Việt và tiếng Anh có đủ cùng một bộ câu chữ;
+  - mọi từ của mỗi ngôn ngữ ký hiệu đều có tên tiếng Việt và tiếng Anh;
+  - lựa chọn lạ trong địa chỉ hoặc bộ nhớ bị bỏ qua.
 
 ## Các file
 
 | File | Làm gì |
 |---|---|
 | `index.html` | Khung của cả 3 trang: Trò chuyện, Dịch video, Từ vựng. |
-| `src/main.js` | Chuyển trang, và tải AI khi cần lần đầu. |
+| `src/main.js` | Chuyển trang, đổi chữ khi bấm VI/EN, và tải AI của ngôn ngữ ký hiệu đang chọn khi cần lần đầu. |
+| `src/settings.js` | Nhớ lựa chọn VSL/ASL và VI/EN (trong trình duyệt), báo cho các trang khi đổi. |
+| `src/i18n.js` | Toàn bộ chữ trên giao diện, bản tiếng Việt và tiếng Anh. Thẻ HTML có `data-t="..."` được tự điền chữ. |
+| `src/signs.js` | Danh sách ngôn ngữ ký hiệu: mỗi ngôn ngữ có danh sách từ, tên từ hai thứ tiếng và vài từ ví dụ. |
 | `src/tracker.js` | "Mắt": MediaPipe dò tay và người trong từng khung hình. |
 | `src/features.js` | Bộ đo cử chỉ: đổi điểm khớp thành 149 con số. Đây là bản dịch y hệt của `ai/sign/features.py`. |
 | `src/model.js` | "Bộ não" (LDA, 0,5 MB, trọng số 8-bit). Chỉ là nhân ma trận + softmax, nên không cần thư viện AI. |
 | `src/recognizer.js` | Tách từng ký hiệu theo lúc **hạ tay**: giơ tay thì gom khung, hạ tay ~0,2 giây thì đoán cả đoạn (giống lúc AI học). Ra liền mạch quá 3 giây thì tự chốt. AI đoán "không phải từ nào" hoặc dưới ngưỡng tự tin thì bỏ qua. |
-| `src/words.json` | Danh sách từ cho trang Từ vựng, do `ai/train.py` xuất ra cùng lúc với model nên luôn khớp nhau. |
+| `src/words/vsl.json`, `asl.json` | Danh sách từ AI biết, do `ai/train.py` xuất ra cùng lúc với model nên luôn khớp nhau. |
+| `src/words/vsl.names.json`, `asl.names.json` | Tên mỗi từ bằng tiếng Việt và tiếng Anh, để hiện chữ đúng ngôn ngữ giao diện. |
 | `src/sentence.js` | Ghép các từ thành câu. |
-| `src/speech.js` | Đọc to câu, và nghe người đối diện nói. Dùng tính năng có sẵn của trình duyệt. |
+| `src/speech.js` | Đọc to câu, và nghe người đối diện nói, bằng tiếng Việt hoặc tiếng Anh theo giao diện. Dùng tính năng có sẵn của trình duyệt. |
 | `src/views/*.js` | Phần xử lý riêng của từng trang. |
 | `src/style.css` | Giao diện. Màu lấy từ cờ cộng đồng người Điếc: xanh ngọc, vàng, xanh đậm. |
-| `public/model/model.json` | Bộ não đã học, do `ai/train.py` xuất ra. |
+| `public/model/vsl.json`, `asl.json` | Bộ não đã học cho từng ngôn ngữ ký hiệu, do `ai/train.py` xuất ra. Chỉ tải bộ não của ngôn ngữ đang chọn. |
 | `public/mediapipe/` | Model dò tay và người cùng phần chạy MediaPipe, dùng cho chế độ không cần mạng. |
 
 ## Nguồn
 
-- **Dữ liệu huấn luyện:** VieSign-10K, tác giả Cap Pham Dinh Thang, giấy phép CC BY 4.0.
+- **Dữ liệu huấn luyện VSL:** VieSign-10K, tác giả Cap Pham Dinh Thang, giấy phép CC BY 4.0.
+- **Dữ liệu huấn luyện ASL:** Google Isolated Sign Language Recognition (Kaggle), thu bởi Deaf Professional Arts Network và Georgia Institute of Technology, giấy phép CC BY 4.0.
 - **Nhận diện điểm khớp:** MediaPipe của Google, giấy phép Apache 2.0.
 - **Phông chữ:** Lexend, giấy phép SIL Open Font License.
 - **Hiệu ứng chuyển động:** GSAP.

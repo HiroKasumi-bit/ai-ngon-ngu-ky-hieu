@@ -1,17 +1,25 @@
-// Điểm khởi động: chuyển trang theo thanh dưới, và tải "mắt" + "bộ não" AI khi cần lần đầu.
+// Điểm khởi động: chuyển trang theo thanh dưới, đổi ngôn ngữ (giao diện, ký hiệu),
+// và tải "mắt" + "bộ não" AI khi cần lần đầu.
 import './style.css'
+import { applyStatic, t } from './i18n.js'
 import { loadModel } from './model.js'
+import { onSettings, setSettings, settings } from './settings.js'
+import { SIGNS, wordName } from './signs.js'
 import { createTracker } from './tracker.js'
 import { initChat } from './views/chat.js'
 import { initVideo } from './views/video.js'
 import { initVocab } from './views/vocab.js'
 
 // Chỉ tải AI (~30 MB) khi người dùng bật camera hoặc chọn video, để mở trang nhanh.
-let engine = null
-export const getEngine = () =>
-  (engine ??= Promise.all([loadModel(`${import.meta.env.BASE_URL}model/model.json`), createTracker()])
-    .then(([model, tracker]) => ({ model, tracker }))
-    .catch(err => { engine = null; throw err }))
+// "Mắt" dùng chung; mỗi ngôn ngữ ký hiệu một "bộ não", tải lần đầu khi được chọn.
+const models = {}
+let tracker = null
+export function getEngine() {
+  const sign = settings.sign
+  models[sign] ??= loadModel(`${import.meta.env.BASE_URL}model/${sign}.json`).catch(err => { delete models[sign]; throw err })
+  tracker ??= createTracker().catch(err => { tracker = null; throw err })
+  return Promise.all([models[sign], tracker]).then(([model, tracker]) => ({ model, tracker, sign }))
+}
 
 const views = { chat: 'chat', video: 'video-view', vocab: 'vocab' }
 function route() {
@@ -23,6 +31,27 @@ function route() {
 }
 addEventListener('hashchange', route)
 route()
+
+// Viết lại mọi chữ cố định trên trang theo lựa chọn hiện tại.
+function renderText({ ui, sign }) {
+  const s = SIGNS[sign]
+  document.documentElement.lang = ui
+  document.title = t(ui, 'meta.title')
+  applyStatic(document, ui, {
+    n: s.words.length,
+    lang: t(ui, `lang.${sign}`),
+    examples: s.examples.map(w => wordName(sign, w, ui)).join(', '),
+    example: wordName(sign, s.examples[0], ui),
+  })
+  document.getElementById('creditData').innerHTML = t(ui, `credit.${sign}`)
+  document.getElementById('signSwitch').hidden = Object.keys(SIGNS).length < 2
+  document.querySelectorAll('[data-sign]').forEach(b => { b.hidden = !(b.dataset.sign in SIGNS); b.setAttribute('aria-pressed', b.dataset.sign === sign) })
+  document.querySelectorAll('[data-ui]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ui === ui))
+}
+document.querySelectorAll('[data-sign]').forEach(b => { b.onclick = () => setSettings({ sign: b.dataset.sign }) })
+document.querySelectorAll('[data-ui]').forEach(b => { b.onclick = () => setSettings({ ui: b.dataset.ui }) })
+onSettings(renderText)
+renderText(settings)
 
 initChat(getEngine)
 initVideo(getEngine)

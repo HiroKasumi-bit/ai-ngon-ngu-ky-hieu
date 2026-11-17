@@ -1,13 +1,15 @@
 // Giọng nói: đọc to câu của người Điếc, và nghe người đối diện nói rồi đổi thành chữ.
 // Dùng tính năng có sẵn của trình duyệt (miễn phí). Nghe giọng nói chạy tốt nhất trên Chrome/Edge.
 
-export function speak(text) {
+const LOCALE = { vi: 'vi-VN', en: 'en-US' } // giọng đọc / nghe theo ngôn ngữ giao diện
+
+export function speak(text, ui = 'vi') {
   if (!('speechSynthesis' in window) || !text) return false
   const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'vi-VN'
+  u.lang = LOCALE[ui]
   u.rate = 0.95
-  const vi = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith('vi'))
-  if (vi) u.voice = vi
+  const voice = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith(ui))
+  if (voice) u.voice = voice
   speechSynthesis.cancel()
   speechSynthesis.speak(u)
   return true
@@ -18,7 +20,6 @@ export function createListener({ onFinal, onInterim, onState }) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SR) return { supported: false, start() {}, stop() {} }
   const r = new SR()
-  r.lang = 'vi-VN'
   r.interimResults = true
   r.continuous = false
   r.onresult = e => {
@@ -30,5 +31,5 @@ export function createListener({ onFinal, onInterim, onState }) {
   r.onstart = () => onState(true)
   r.onend = () => onState(false)
   r.onerror = e => onState(false, e.error)
-  return { supported: true, start: () => r.start(), stop: () => r.stop() }
+  return { supported: true, start: (ui = 'vi') => { r.lang = LOCALE[ui]; r.start() }, stop: () => r.stop() }
 }

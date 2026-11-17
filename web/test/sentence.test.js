@@ -14,7 +14,8 @@ test('word_label_replaces_underscore', () => {
 })
 
 test('sentence_capitalises_and_ends_with_period', () => {
-  assert.equal(toSentence(['bác_sĩ', 'mệt']), 'Bác sĩ mệt.')
+  assert.equal(toSentence(['bác sĩ', 'mệt'], 'vi'), 'Bác sĩ mệt.')
+  assert.equal(toSentence(['thank you', 'mom'], 'en'), 'Thank you mom.')
 })
 
 test('empty_sentence_is_empty', () => {
