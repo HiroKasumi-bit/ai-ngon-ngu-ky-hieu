@@ -91,7 +91,7 @@ export function initChat(getEngine) {
       $('live').hidden = false
       run(engine)
     } catch (err) {
-      console.error('[Lời Tay] không khởi động được:', err)
+      console.error('[SignBridge AI] không khởi động được:', err)
       btn.disabled = false
       msg.textContent = t(settings.ui, err?.name === 'NotAllowedError' ? 'cam.denied' : err?.name === 'NotFoundError' ? 'cam.none' : 'cam.fail')
     }

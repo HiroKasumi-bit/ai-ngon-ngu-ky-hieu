@@ -1,4 +1,4 @@
-/* Lời Tay — giao diện. Màu lấy từ cờ cộng đồng người Điếc: xanh ngọc, vàng, xanh đậm. */
+/* SignBridge AI — giao diện. Màu lấy từ cờ cộng đồng người Điếc: xanh ngọc, vàng, xanh đậm. */
 :root {
   --teal: #1FB3A6;
   --teal-ink: #0E7C72;   /* xanh ngọc đậm: đủ tương phản cho chữ trắng */
@@ -33,9 +33,10 @@ html { caret-color: var(--teal-ink); scrollbar-color: rgba(24, 38, 90, .25) tran
 a { color: var(--teal-ink) }
 
 /* ---------- thanh trên ---------- */
-.bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; max-width: 1180px; margin: 0 auto }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px 6px; max-width: 1180px; margin: 0 auto }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit }
-.brand b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1 }
+.brand b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; white-space: nowrap }
+.brand b .ai { color: var(--teal) }   /* "AI" xanh ngọc, giống logo chữ */
 .brand small { display: block; font-size: 13px; color: var(--muted) }
 /* nút chọn ngôn ngữ ký hiệu (VSL/ASL) và ngôn ngữ giao diện (VI/EN) */
 .switches { display: flex; gap: 6px; flex: none }
@@ -43,7 +44,16 @@ a { color: var(--teal-ink) }
 .seg button { min-width: 40px; height: 34px; padding: 0 10px; border-radius: 99px; font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--muted) }
 .seg button:hover { color: var(--navy) }
 .seg button[aria-pressed="true"] { background: var(--teal-ink); color: #fff }
-@media (max-width: 479px) { .brand small { display: none } }
+/* Điện thoại: tên + 2 nhóm nút phải vừa một hàng, kể cả màn 360 px */
+@media (max-width: 479px) {
+  .brand small { display: none }
+  .brand { gap: 8px }
+  .brand img { width: 32px; height: auto }
+  .brand b { font-size: 16px }
+  .switches { gap: 4px }
+  .seg { padding: 2px }
+  .seg button { padding: 0 6px }
+}
 
 /* ---------- bố cục ---------- */
 main { max-width: 1180px; margin: 0 auto; padding: 10px 16px 20px }

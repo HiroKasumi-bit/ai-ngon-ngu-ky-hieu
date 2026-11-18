@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3FAF9">
-  <meta name="description" content="Lời Tay: phiên dịch ngôn ngữ ký hiệu Việt Nam ngay trên điện thoại. Dự án khởi nghiệp nhóm 11A4, THPT Lê Quý Đôn.">
-  <title data-t="meta.title">Lời Tay · Phiên dịch ngôn ngữ ký hiệu</title>
+  <meta name="description" content="SignBridge AI: phiên dịch ngôn ngữ ký hiệu Việt Nam và ASL ngay trên điện thoại. Dự án khởi nghiệp của học sinh lớp 11A4 và 11A8, THPT Lê Quý Đôn.">
+  <title data-t="meta.title">SignBridge AI · Phiên dịch ngôn ngữ ký hiệu</title>
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,9 +27,9 @@
   </svg>
 
   <header class="bar">
-    <a class="brand" href="#chat" aria-label="Lời Tay, về trang trò chuyện" data-t-attr="aria-label:brand.home">
+    <a class="brand" href="#chat" aria-label="SignBridge AI, về trang trò chuyện" data-t-attr="aria-label:brand.home">
       <img src="/logo.svg" alt="" width="40" height="34">
-      <span><b translate="no">Lời Tay</b><small data-t="brand.sub">Phiên dịch ngôn ngữ ký hiệu</small></span>
+      <span><b translate="no">SignBridge <span class="ai">AI</span></b><small data-t="brand.sub">Phiên dịch ngôn ngữ ký hiệu</small></span>
     </a>
     <div class="switches">
       <div class="seg" role="group" id="signSwitch" aria-label="Ngôn ngữ ký hiệu" data-t-attr="aria-label:switch.sign">
@@ -57,7 +57,7 @@
           <canvas id="overlay"></canvas>
           <div class="cam-off" id="camOff">
             <img src="/logo.svg" alt="" width="72" height="62">
-            <p id="camMsg" data-t="cam.msg">Ra ký hiệu trước camera. Lời Tay đổi thành chữ và đọc to cho người đối diện.</p>
+            <p id="camMsg" data-t="cam.msg">Ra ký hiệu trước camera. SignBridge AI đổi thành chữ và đọc to cho người đối diện.</p>
             <button class="btn primary" id="camStart"><svg><use href="#i-cam"/></svg><span data-t="cam.start">Bật camera</span></button>
             <small data-t-html="cam.try">Thử: khẩu trang, điện thoại, đúng, sai… <a href="#vocab">Xem đủ 183 từ</a><br>Hình ảnh chỉ xử lý trên máy bạn.</small>
           </div>
@@ -99,7 +99,7 @@
     <section class="view" id="video-view" aria-label="Dịch video" hidden data-t-attr="aria-label:tab.video">
       <div class="card pad narrow">
         <h1 data-t="video.title">Dịch video</h1>
-        <p class="lead" data-t="video.lead">Chọn video có người ra ký hiệu. Lời Tay xem từng khung hình và liệt kê các từ nhận được.</p>
+        <p class="lead" data-t="video.lead">Chọn video có người ra ký hiệu. SignBridge AI xem từng khung hình và liệt kê các từ nhận được.</p>
         <label class="drop" for="file">
           <svg><use href="#i-up"/></svg>
           <b data-t="video.pick">Chọn video</b>
@@ -115,7 +115,7 @@
     <!-- TRANG 3: TỪ VỰNG -->
     <section class="view" id="vocab" aria-label="Từ vựng" hidden data-t-attr="aria-label:tab.vocab">
       <div class="card pad narrow">
-        <h1 data-t="vocab.title">Lời Tay hiểu được gì?</h1>
+        <h1 data-t="vocab.title">SignBridge AI hiểu được gì?</h1>
         <p class="lead" data-t-html="vocab.lead">Bản thử nghiệm nhận diện <b>183</b> ký hiệu ngôn ngữ ký hiệu Việt Nam. Ra từng ký hiệu rõ ràng, sau mỗi từ hạ tay xuống một chút. Cử động không phải ký hiệu sẽ được bỏ qua.</p>
         <label class="search">
           <svg><use href="#i-search"/></svg>
@@ -125,7 +125,7 @@
         <div id="groups"></div>
         <p class="credit">
           <span id="creditData">Dữ liệu huấn luyện: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> của Cap Pham Dinh Thang (giấy phép CC BY 4.0).</span>
-          <span data-t-html="credit.rest">Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.</span>
+          <span data-t-html="credit.rest">Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>Dự án khởi nghiệp của nhóm học sinh lớp 11A4 và 11A8, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.</span>
         </p>
       </div>
     </section>

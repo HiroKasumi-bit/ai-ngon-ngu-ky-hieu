@@ -1,6 +1,6 @@
-# Website Lời Tay
+# Website SignBridge AI
 
-Lời Tay giúp người Điếc và người nghe trò chuyện với nhau. AI chạy **ngay trong trình duyệt**: hình từ camera không bị gửi đi đâu, và không cần máy chủ.
+SignBridge AI giúp người Điếc và người nghe trò chuyện với nhau. AI chạy **ngay trong trình duyệt**: hình từ camera không bị gửi đi đâu, và không cần máy chủ.
 
 ## Chạy thử trên máy
 
@@ -16,6 +16,17 @@ Sau đó mở địa chỉ mà Vite in ra màn hình (thường là http://local
 - **Mẹo khi trình bày:** ra từng ký hiệu rõ ràng, sau mỗi từ **hạ tay xuống** một chút để app chốt từ.
 - **Đổi ngôn ngữ:** hai nút ở góc trên. **VSL | ASL** chọn ngôn ngữ ký hiệu (Việt Nam hoặc Mỹ), **VI | EN** chọn chữ trên giao diện. Lựa chọn được nhớ cho lần sau. Có thể mở thẳng bằng địa chỉ, ví dụ `?sign=asl&ui=en`.
 - **Thử khi không có camera:** đặt một video ký hiệu vào `public/demo/` (thư mục này không đưa lên git), rồi mở `http://localhost:5173/?demo=/demo/ten-video.mp4`. Website sẽ dùng video thay cho camera.
+
+## Đưa lên mạng
+
+Web chạy trên **Cloudflare Pages** tại https://signbridge-vn.pages.dev (dự án Pages `signbridge-vn`). Sau khi sửa code:
+
+```bash
+npm test
+npm run deploy
+```
+
+`npm run deploy` đóng gói web rồi tải thư mục `dist/` lên Cloudflare bằng `wrangler` (máy cần đăng nhập Cloudflare: `npx wrangler login`). Mỗi lần push lên `main`, GitHub Actions vẫn chạy kiểm thử và cập nhật bản phụ trên GitHub Pages.
 
 ## Kiểm thử
 

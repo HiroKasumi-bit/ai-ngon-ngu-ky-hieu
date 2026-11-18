@@ -2,8 +2,8 @@
 // (test/i18n.test.js kiểm tra hai bên đủ như nhau). {tên} được thay bằng giá trị lúc hiển thị.
 
 const vi = {
-  'meta.title': 'Lời Tay · Phiên dịch ngôn ngữ ký hiệu',
-  'brand.home': 'Lời Tay, về trang trò chuyện',
+  'meta.title': 'SignBridge AI · Phiên dịch ngôn ngữ ký hiệu',
+  'brand.home': 'SignBridge AI, về trang trò chuyện',
   'brand.sub': 'Phiên dịch ngôn ngữ ký hiệu',
   'switch.sign': 'Ngôn ngữ ký hiệu',
   'switch.ui': 'Ngôn ngữ giao diện',
@@ -14,7 +14,7 @@ const vi = {
   'lang.vsl': 'ngôn ngữ ký hiệu Việt Nam',
   'lang.asl': 'ngôn ngữ ký hiệu Mỹ (ASL)',
 
-  'cam.msg': 'Ra ký hiệu trước camera. Lời Tay đổi thành chữ và đọc to cho người đối diện.',
+  'cam.msg': 'Ra ký hiệu trước camera. SignBridge AI đổi thành chữ và đọc to cho người đối diện.',
   'cam.start': 'Bật camera',
   'cam.try': 'Thử: {examples}… <a href="#vocab">Xem đủ {n} từ</a><br>Hình ảnh chỉ xử lý trên máy bạn.',
   'cam.hint': 'Đưa tay vào khung hình',
@@ -40,7 +40,7 @@ const vi = {
   'mic.unsupported': 'Trình duyệt này chưa nghe được giọng nói. Hãy mở bằng Chrome hoặc Edge.',
 
   'video.title': 'Dịch video',
-  'video.lead': 'Chọn video có người ra ký hiệu. Lời Tay xem từng khung hình và liệt kê các từ nhận được.',
+  'video.lead': 'Chọn video có người ra ký hiệu. SignBridge AI xem từng khung hình và liệt kê các từ nhận được.',
   'video.pick': 'Chọn video',
   'video.formats': 'MP4, MOV hoặc WEBM. Video chỉ xử lý trên máy bạn.',
   'video.loading': 'Đang tải AI nhận diện…',
@@ -50,20 +50,20 @@ const vi = {
   'video.found': 'Nhận được {n} ký hiệu:',
   'video.none': 'Không tìm thấy ký hiệu nào trong video này.',
 
-  'vocab.title': 'Lời Tay hiểu được gì?',
+  'vocab.title': 'SignBridge AI hiểu được gì?',
   'vocab.lead': 'Bản thử nghiệm nhận diện <b>{n}</b> ký hiệu {lang}. Ra từng ký hiệu rõ ràng, sau mỗi từ hạ tay xuống một chút. Cử động không phải ký hiệu sẽ được bỏ qua.',
   'vocab.search': 'Tìm từ, ví dụ: {example}',
   'vocab.searchLabel': 'Tìm từ',
   'vocab.found': 'Tìm thấy {n} từ',
-  'vocab.none': 'Chưa có từ “{q}”. Lời Tay đang học thêm.',
+  'vocab.none': 'Chưa có từ “{q}”. SignBridge AI đang học thêm.',
   'credit.vsl': 'Dữ liệu huấn luyện: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> của Cap Pham Dinh Thang (giấy phép CC BY 4.0).',
   'credit.asl': 'Dữ liệu huấn luyện: <a href="https://www.kaggle.com/competitions/asl-signs" target="_blank" rel="noopener">Google Isolated Sign Language Recognition</a> của Deaf Professional Arts Network và Georgia Tech (giấy phép CC BY 4.0).',
-  'credit.rest': 'Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.',
+  'credit.rest': 'Nhận diện điểm khớp: MediaPipe của Google (Apache 2.0).<br>Dự án khởi nghiệp của nhóm học sinh lớp 11A4 và 11A8, Trường THPT Lê Quý Đôn · Giáo viên hướng dẫn: cô Lê Thị Thúy.',
 }
 
 const en = {
-  'meta.title': 'Lời Tay · Sign language interpreter',
-  'brand.home': 'Lời Tay, back to chat',
+  'meta.title': 'SignBridge AI · Sign language interpreter',
+  'brand.home': 'SignBridge AI, back to chat',
   'brand.sub': 'Sign language interpreter',
   'switch.sign': 'Sign language',
   'switch.ui': 'Interface language',
@@ -74,7 +74,7 @@ const en = {
   'lang.vsl': 'Vietnamese Sign Language',
   'lang.asl': 'American Sign Language (ASL)',
 
-  'cam.msg': 'Sign in front of the camera. Lời Tay turns your signs into text and reads them aloud.',
+  'cam.msg': 'Sign in front of the camera. SignBridge AI turns your signs into text and reads them aloud.',
   'cam.start': 'Turn on camera',
   'cam.try': 'Try: {examples}… <a href="#vocab">See all {n} signs</a><br>The video stays on your device.',
   'cam.hint': 'Bring your hands into view',
@@ -100,7 +100,7 @@ const en = {
   'mic.unsupported': 'This browser can’t listen to speech. Please open the app in Chrome or Edge.',
 
   'video.title': 'Translate a video',
-  'video.lead': 'Choose a video of someone signing. Lời Tay watches every frame and lists the signs it recognizes.',
+  'video.lead': 'Choose a video of someone signing. SignBridge AI watches every frame and lists the signs it recognizes.',
   'video.pick': 'Choose video',
   'video.formats': 'MP4, MOV or WEBM. The video stays on your device.',
   'video.loading': 'Loading the recognition AI…',
@@ -110,15 +110,15 @@ const en = {
   'video.found': 'Recognized {n} signs:',
   'video.none': 'No signs found in this video.',
 
-  'vocab.title': 'What does Lời Tay understand?',
+  'vocab.title': 'What does SignBridge AI understand?',
   'vocab.lead': 'This trial version recognizes <b>{n}</b> signs in {lang}. Sign one word at a time and lower your hands briefly after each one. Movements that are not signs are ignored.',
   'vocab.search': 'Search, e.g. {example}',
   'vocab.searchLabel': 'Search signs',
   'vocab.found': 'Found {n} signs',
-  'vocab.none': 'No sign for “{q}” yet. Lời Tay is still learning.',
+  'vocab.none': 'No sign for “{q}” yet. SignBridge AI is still learning.',
   'credit.vsl': 'Training data: <a href="https://zenodo.org/records/23610105" target="_blank" rel="noopener">VieSign-10K</a> by Cap Pham Dinh Thang (CC BY 4.0).',
   'credit.asl': 'Training data: <a href="https://www.kaggle.com/competitions/asl-signs" target="_blank" rel="noopener">Google Isolated Sign Language Recognition</a> by Deaf Professional Arts Network and Georgia Tech (CC BY 4.0).',
-  'credit.rest': 'Landmark detection: Google MediaPipe (Apache 2.0).<br>A student startup project by class 11A4, Le Quy Don High School · Advisor: Ms. Le Thi Thuy.',
+  'credit.rest': 'Landmark detection: Google MediaPipe (Apache 2.0).<br>A student startup project by classes 11A4 and 11A8, Le Quy Don High School · Advisor: Ms. Le Thi Thuy.',
 }
 
 export const STR = { vi, en }

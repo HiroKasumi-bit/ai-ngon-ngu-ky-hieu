@@ -1,8 +1,8 @@
-# Lời Tay: phiên dịch ngôn ngữ ký hiệu Việt Nam
+# SignBridge AI: phiên dịch ngôn ngữ ký hiệu Việt Nam
 
-**Dùng thử:** https://hirokasumi-bit.github.io/ai-ngon-ngu-ky-hieu/
+**Dùng thử:** https://signbridge-vn.pages.dev
 
-Lời Tay giúp người Điếc và người nghe trò chuyện với nhau:
+SignBridge AI giúp người Điếc và người nghe trò chuyện với nhau:
 
 - **Người Điếc** ra ký hiệu trước camera. AI nhận diện, chuyển thành chữ và đọc to cho người đối diện.
 - **Người nghe** bấm micro rồi nói. Câu nói hiện thành chữ để người Điếc đọc.
@@ -34,4 +34,4 @@ Ngôn ngữ chính là **ngôn ngữ ký hiệu Việt Nam (VSL)**. Nút ở gó
 
 ## Nhóm thực hiện
 
-Dự án khởi nghiệp của nhóm 11A4, Trường THPT Lê Quý Đôn, năm học 2026–2027. Giáo viên hướng dẫn: cô Lê Thị Thúy.
+Dự án khởi nghiệp của nhóm học sinh lớp 11A4 và 11A8, Trường THPT Lê Quý Đôn, năm học 2026–2027. Giáo viên hướng dẫn: cô Lê Thị Thúy.

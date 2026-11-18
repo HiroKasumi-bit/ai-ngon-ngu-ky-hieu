@@ -62,3 +62,12 @@ test('index_html_has_no_vietnamese_text_without_translation', () => {
     .map(m => m[3].trim())
   assert.deepEqual(missed, [])
 })
+
+test('app_is_called_signbridge_ai_everywhere', () => {
+  // Tên cũ "Lời Tay" không được sót ở chữ giao diện hay trong index.html.
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+  for (const [where, text] of [['i18n', JSON.stringify(STR)], ['index.html', html]]) {
+    assert.ok(!text.includes('Lời Tay'), `${where} còn tên cũ`)
+    assert.ok(text.includes('SignBridge'), `${where} chưa có tên mới`)
+  }
+})
