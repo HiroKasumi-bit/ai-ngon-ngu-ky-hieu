@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F3FAF9">
+  <meta name="description" content="SignBridge AI nhận diện ngôn ngữ ký hiệu qua camera rồi đổi thành chữ và giọng nói. Dự án khởi nghiệp của học sinh lớp 11A4 và 11A8, Trường THPT Lê Quý Đôn.">
+  <title>SignBridge AI · Nói bằng tay, AI cũng hiểu</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="./" aria-label="SignBridge AI, về đầu trang">
+      <svg class="mark" viewBox="80 140 352 300" width="34" height="29" aria-hidden="true">
+        <path class="hand" d="M96 214 C90 182 110 160 138 158 C152 158 160 170 154 184 C146 206 150 232 162 254 C188 304 222 328 246 332 L246 424 C172 420 114 360 96 214Z"/>
+        <path class="hand" d="M416 214 C422 182 402 160 374 158 C360 158 352 170 358 184 C366 206 362 232 350 254 C324 304 290 328 266 332 L266 424 C340 420 398 360 416 214Z"/>
+        <path fill="#FFC431" d="M256 168 C298 168 330 196 330 234 C330 272 298 298 258 298 C246 298 236 296 228 292 L196 304 L208 278 C192 266 182 250 182 234 C182 196 214 168 256 168Z"/>
+        <g fill="#18265A"><circle cx="228" cy="234" r="9"/><circle cx="256" cy="234" r="9"/><circle cx="284" cy="234" r="9"/></g>
+      </svg>
+      <b translate="no">SignBridge <span>AI</span></b>
+    </a>
+    <nav aria-label="Trang giới thiệu">
+      <a class="nav-link" href="#cach-hoat-dong">Cách hoạt động</a>
+      <a class="nav-cta" href="../">Dùng thử</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- CẢNH 1: MỞ MÀN -->
+    <section class="hero" id="hero">
+      <div class="disc" aria-hidden="true"></div>
+      <canvas class="logo3d" id="logo3d" aria-hidden="true"></canvas>
+      <div class="logo-slot" id="logoSlot" aria-hidden="true">
+        <div class="chip" id="chip">
+          <span class="chip-word"><span id="chipWord">khẩu trang</span></span>
+          <span class="chip-tag" id="chipTag">VSL</span>
+          <span class="meter"><i id="chipBar"></i></span>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <h1 class="title">
+          <span class="line">Nói bằng tay,</span>
+          <span class="line"><span class="ai">AI</span> cũng hiểu.</span>
+        </h1>
+        <p class="lead">Camera nhận diện ngôn ngữ ký hiệu rồi đổi ngay thành chữ và giọng nói, để người Điếc và người nghe trò chuyện với nhau thật tự nhiên.</p>
+        <div class="actions">
+          <a class="btn primary" href="../">Dùng thử ngay</a>
+          <a class="btn ghost" href="?trungbay">Chế độ trưng bày</a>
+        </div>
+      </div>
+
+      <footer class="hero-foot">
+        <p class="byline">Dự án khởi nghiệp của học sinh lớp 11A4 và 11A8 · Trường THPT Lê Quý Đôn</p>
+        <a class="scroll-cue" href="#cach-hoat-dong"><span>Cuộn xuống</span><i aria-hidden="true"></i></a>
+      </footer>
+    </section>
+
+    <!-- CẢNH 2: HAI THẾ GIỚI -->
+    <section class="statement" id="cach-hoat-dong">
+      <p class="say"><span class="line">Người Điếc nói bằng tay.</span><span class="line">Người nghe nói bằng lời.</span></p>
+      <p class="say-sub">SignBridge AI đứng giữa, dịch cả hai chiều ngay trên điện thoại hoặc laptop.</p>
+      <a class="btn dark" href="../">Dùng thử ngay</a>
+    </section>
+  </main>
+
+  <script type="module" src="/src/intro/main.js"></script>
+</body>
+</html>
