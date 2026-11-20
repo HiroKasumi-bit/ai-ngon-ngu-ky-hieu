@@ -1,7 +1,7 @@
 // Trang trò chuyện hai chiều.
 // Người Điếc: ký hiệu trước camera -> từ hiện ra -> ghép câu -> "Gửi và đọc to".
 // Người nghe: bấm micro, nói -> chữ hiện ra trong khung trò chuyện.
-import { gsap } from 'gsap'
+import { flash, flyWord, micMeter, pop, writeWords } from '../effects.js'
 import { t } from '../i18n.js'
 import { createRecognizer } from '../recognizer.js'
 import { toSentence } from '../sentence.js'
@@ -10,7 +10,6 @@ import { wordName } from '../signs.js'
 import { createListener, speak } from '../speech.js'
 
 const $ = id => document.getElementById(id)
-const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function initChat(getEngine) {
   const cam = $('cam'), video = $('video'), overlay = $('overlay'), ctx = overlay.getContext('2d')
@@ -18,12 +17,15 @@ export function initChat(getEngine) {
   const name = w => wordName(w.sign, w.label, settings.ui)
 
   // ---------- câu nháp ----------
-  function renderDraft(popLast = false) {
+  function renderDraft(newWord = false) {
     const box = $('draft')
     box.innerHTML = words.length ? '' : `<span class="placeholder">${t(settings.ui, 'draft.empty')}</span>`
     words.forEach(w => box.insertAdjacentHTML('beforeend', `<span class="word">${name(w)}</span>`))
     $('send').disabled = !words.length
-    if (popLast && !calm) gsap.from(box.lastElementChild, { scale: 0.6, opacity: 0, duration: 0.35, ease: 'back.out(2.2)' })
+    if (!newWord) return
+    // từ mới bay từ chip trên khung camera xuống câu; không có camera (chạy thử) thì bật ra tại chỗ
+    const live = $('live')
+    live.hidden ? pop(box.lastElementChild) : flyWord($('liveWord'), box.lastElementChild)
   }
   $('undo').onclick = () => { words.pop(); renderDraft() }
   $('clear').onclick = () => { words = []; renderDraft() }
@@ -42,10 +44,9 @@ export function initChat(getEngine) {
     const li = document.createElement('li')
     li.className = `msg ${side}`
     li.innerHTML = `<small>${who}</small>`
-    li.append(text)
     thread.append(li)
+    writeWords(li, text) // chữ hiện từng từ, như đang được nói ra
     thread.scrollTop = thread.scrollHeight
-    if (!calm) gsap.from(li, { y: 10, opacity: 0, duration: 0.3, ease: 'power2.out' })
   }
 
   // Chỉ khi chạy thử trên máy: cho phép bơm từ/tin nhắn để kiểm tra giao diện
@@ -60,6 +61,7 @@ export function initChat(getEngine) {
 
   // ---------- micro cho người nghe ----------
   const interim = $('interim'), mic = $('mic')
+  const meter = micMeter(mic) // sóng âm theo giọng thật trên nút micro (laptop)
   const say = key => t(settings.ui, key)
   const idle = () => { interim.textContent = say('mic.idle'); interim.classList.remove('on') }
   const listener = createListener({
@@ -67,6 +69,7 @@ export function initChat(getEngine) {
     onFinal: text => { idle(); addMessage('them', say('who.them'), text) },
     onState: (on, err) => {
       mic.classList.toggle('on', on)
+      on ? meter.start() : meter.stop()
       if (on) { interim.textContent = say('mic.listening'); interim.classList.add('on') }
       else if (err === 'not-allowed') interim.textContent = say('mic.denied')
       else if (err) interim.textContent = say('mic.retry')
@@ -135,7 +138,7 @@ export function initChat(getEngine) {
         liveWord.textContent = hands && cur ? wordName(sign, cur.label, settings.ui) : '…'
         liveBar.style.width = `${hands && cur ? Math.round(cur.prob * 100) : 0}%`
         draw(landmarks)
-        if (hit) { words.push({ sign, label: hit.word }); renderDraft(true) }
+        if (hit) { words.push({ sign, label: hit.word }); renderDraft(true); flash(cam) }
       }
       video.requestVideoFrameCallback ? video.requestVideoFrameCallback(tick) : requestAnimationFrame(tick)
     }

@@ -17,6 +17,27 @@ Sau đó mở địa chỉ mà Vite in ra màn hình (thường là http://local
 - **Đổi ngôn ngữ:** hai nút ở góc trên. **VSL | ASL** chọn ngôn ngữ ký hiệu (Việt Nam hoặc Mỹ), **VI | EN** chọn chữ trên giao diện. Lựa chọn được nhớ cho lần sau. Có thể mở thẳng bằng địa chỉ, ví dụ `?sign=asl&ui=en`.
 - **Thử khi không có camera:** đặt một video ký hiệu vào `public/demo/` (thư mục này không đưa lên git), rồi mở `http://localhost:5173/?demo=/demo/ten-video.mp4`. Website sẽ dùng video thay cho camera.
 
+## Trang giới thiệu
+
+Trang `/gioi-thieu/` (https://signbridge-vn.pages.dev/gioi-thieu/) kể chuyện về sản phẩm, dùng để trưng bày trên laptop.
+- **Phần mở màn** là một đoạn phim logo 3D render bằng Blender Cycles. Hai bàn tay trượt vào, bong bóng bật lên, ba chấm "đang gõ", rồi camera lùi ra.
+- **Chữ trên trang** hiện theo nhịp phim. Cuộn xuống thì camera lao vào panel xanh ngọc, chuyển sang cảnh tiếp theo.
+
+Phim nằm ở `public/gioi-thieu/` và được làm lại bằng hai bước:
+
+```bash
+blender -b --factory-startup --python render/logo_scene.py -- anim   # khoảng 20 phút với card RTX
+bash render/encode.sh                                                # ghép khung thành video
+```
+
+`render/logo_scene.py` dựng toàn bộ cảnh bằng code:
+- **Hình logo:** cùng đường nét với `public/logo.svg`.
+- **Chất liệu:** satin mờ, cạnh vát nhỏ và sắc.
+- **Ánh sáng:** một softbox chính trên-trái, đèn phụ, đèn viền.
+- **Màu:** chế độ "Khronos PBR Neutral" để giữ đúng màu thương hiệu.
+
+Muốn xem nhanh một khung tĩnh thì chạy `-- still`.
+
 ## Đưa lên mạng
 
 Web chạy trên **Cloudflare Pages** tại https://signbridge-vn.pages.dev (dự án Pages `signbridge-vn`). Sau khi sửa code:

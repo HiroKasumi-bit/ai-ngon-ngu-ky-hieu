@@ -61,7 +61,8 @@ Nhóm sẽ trưng bày SignBridge AI trên **laptop** ở gian hàng. Cần mộ
 ## Kỹ thuật
 
 - Vite nhiều trang: `index.html` (app) + `gioi-thieu/index.html`.
-- `three` (npm, ghim phiên bản) cho logo 3D; GSAP (đã có) + ScrollTrigger + SplitText cho cuộn và chữ.
+- **Đổi ngày 20/11:** người dùng chê logo three.js (đùn khối, vát tròn, phủ bóng) là "nhựa, quá AI". Vì vậy logo được render thật bằng Blender Cycles: vát nhỏ và sắc, chất liệu satin mờ, đèn studio, màu Khronos PBR Neutral. Phim xuất ra mp4, trang phát phim thay cho 3D chạy trực tiếp. Bỏ hẳn `three`.
+- GSAP (đã có) + ScrollTrigger + SplitText cho cuộn và chữ.
 - Chế độ trưng bày dùng lại `createTracker`, `createRecognizer`, `loadModel` của app.
 
 ## Để người làm tự quyết

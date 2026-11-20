@@ -1,6 +1,7 @@
 // Điểm khởi động: chuyển trang theo thanh dưới, đổi ngôn ngữ (giao diện, ký hiệu),
 // và tải "mắt" + "bộ não" AI khi cần lần đầu.
 import './style.css'
+import { calm, slideTo, staggerIn } from './effects.js'
 import { applyStatic, t } from './i18n.js'
 import { loadModel } from './model.js'
 import { onSettings, setSettings, settings } from './settings.js'
@@ -22,15 +23,25 @@ export function getEngine() {
 }
 
 const views = { chat: 'chat', video: 'video-view', vocab: 'vocab' }
-function route() {
+const tabInd = document.querySelector('.tab-ind')
+function route(first = false) {
   const key = location.hash.slice(1) in views ? location.hash.slice(1) : 'chat'
   for (const [k, id] of Object.entries(views)) document.getElementById(id).hidden = k !== key
   scrollTo(0, 0)
   document.querySelectorAll('.tabs a').forEach(a =>
     a.dataset.tab === views[key] ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'))
+  slideTo(tabInd, document.querySelector('.tabs a[aria-current]'), first) // ô nền trượt sang tab mới
+  if (key === 'vocab' && !first) staggerIn(document.querySelectorAll('#groups .word'))
 }
-addEventListener('hashchange', route)
-route()
+// Chuyển trang mượt (View Transitions) khi trình duyệt hỗ trợ; không thì đổi ngay.
+addEventListener('hashchange', () => {
+  if (!document.startViewTransition || calm) return route()
+  document.startViewTransition(() => route()).ready.catch(() => {}) // tab đang ẩn thì trình duyệt bỏ hiệu ứng, trang vẫn đổi
+})
+const snapTab = () => slideTo(tabInd, document.querySelector('.tabs a[aria-current]'), true)
+addEventListener('resize', snapTab)
+document.fonts.ready.then(snapTab) // font về làm tab rộng ra: đặt lại ô nền cho khít
+route(true)
 
 // Viết lại mọi chữ cố định trên trang theo lựa chọn hiện tại.
 function renderText({ ui, sign }) {

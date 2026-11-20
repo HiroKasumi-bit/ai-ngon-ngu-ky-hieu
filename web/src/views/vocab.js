@@ -1,5 +1,6 @@
 // Trang từ vựng: mọi ký hiệu app hiểu (theo ngôn ngữ ký hiệu đang chọn), xếp theo chữ cái đầu, có ô tìm kiếm.
 // Tên từ hiện theo ngôn ngữ giao diện; tìm kiếm không cần gõ dấu.
+import { staggerIn } from '../effects.js'
 import { t } from '../i18n.js'
 import { plain } from '../sentence.js'
 import { onSettings, settings } from '../settings.js'
@@ -33,7 +34,7 @@ export function initVocab() {
     ).join('')
     count.textContent = !q ? '' : t(settings.ui, shown ? 'vocab.found' : 'vocab.none', { n: shown, q: input.value.trim() })
   }
-  input.addEventListener('input', render)
+  input.addEventListener('input', () => { render(); staggerIn(groups.querySelectorAll('.word')) }) // kết quả tìm hiện so le
   onSettings(load)
   load(settings)
 }

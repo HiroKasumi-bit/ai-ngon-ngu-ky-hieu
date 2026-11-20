@@ -151,7 +151,10 @@ h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 6
 /* ---------- thanh chuyển trang ---------- */
 .tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 4px; background: rgba(255, 255, 255, .94); backdrop-filter: blur(8px); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); z-index: 10 }
 .tabs a { flex: 1; max-width: 160px; display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: none }
-.tabs a[aria-current="page"] { color: var(--teal-ink); background: var(--teal-soft) }
+.tabs a[aria-current="page"] { color: var(--teal-ink) }
+.tabs { isolation: isolate }
+/* ô nền của tab đang chọn: một phần tử duy nhất, trượt sang tab mới (effects.js: slideTo) */
+.tab-ind { position: absolute; z-index: -1; left: 0; top: 0; border-radius: 12px; background: var(--teal-soft); pointer-events: none }
 
 /* ---------- laptop: hai cột ---------- */
 @media (min-width: 960px) {
@@ -163,10 +166,35 @@ h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 6
   .talk { position: sticky; top: 16px }
   .thread { max-height: 52vh }
   .thread-card { min-height: 360px; align-content: start }
-  .tabs { position: static; justify-content: flex-start; background: none; border: 0; backdrop-filter: none; max-width: 1180px; margin: 0 auto; padding: 4px 24px 0 }
+  .tabs { position: relative; justify-content: flex-start; background: none; border: 0; backdrop-filter: none; max-width: 1180px; margin: 0 auto; padding: 4px 24px 0 }
   .tabs a { grid-auto-flow: column; gap: 8px; align-items: center; font-size: 15px; padding: 10px 16px; max-width: none; flex: none }
   .tabs svg { width: 20px; height: 20px }
 }
+
+/* ---------- hiệu ứng (effects.js) ---------- */
+/* khung camera chớp viền xanh ngọc khi nhận được một từ */
+.cam::after { content: ""; position: absolute; z-index: 3; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 4px var(--teal); opacity: 0; pointer-events: none }
+.cam.hit::after { animation: hit .8s cubic-bezier(.2, .7, .3, 1) }
+@keyframes hit { from { opacity: 1 } to { opacity: 0 } }
+/* tin nhắn hiện từng từ */
+.msg .w { display: inline-block }
+/* logo màn chờ: ba chấm nhấp nhô như đang gõ */
+.idle-logo { width: 72px; height: 62px }
+.idle-logo circle { transform-box: fill-box; transform-origin: center; animation: typing 1.4s ease-in-out infinite }
+.idle-logo circle:nth-child(2) { animation-delay: .16s }
+.idle-logo circle:nth-child(3) { animation-delay: .32s }
+@keyframes typing { 0%, 60%, 100% { transform: translateY(0) } 30% { transform: translateY(-10px) } }
+/* micro đang nghe (laptop): biểu tượng đổi thành 4 cột sóng âm theo giọng thật */
+.mic .lvl { display: none; width: 5px; height: 26px; border-radius: 3px; background: currentColor; transform: scaleY(.18); transition: transform 80ms linear }
+.mic.meter-on { grid-auto-flow: column; gap: 4px }
+.mic.meter-on svg { display: none }
+.mic.meter-on .lvl { display: block }
+/* chuyển trang: trang cũ mờ đi, trang mới trồi lên nhẹ */
+main { view-transition-name: page }
+::view-transition-old(page) { animation: page-out .14s cubic-bezier(.4, 0, 1, 1) both }
+::view-transition-new(page) { animation: page-in .42s .1s cubic-bezier(.16, 1, .3, 1) both } /* chờ trang cũ mờ hết rồi mới hiện */
+@keyframes page-out { to { opacity: 0; transform: translateY(-6px) } }
+@keyframes page-in { from { opacity: 0; transform: translateY(14px) } }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important }

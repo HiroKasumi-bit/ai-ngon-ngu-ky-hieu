@@ -28,14 +28,16 @@
   <main>
     <!-- CẢNH 1: MỞ MÀN -->
     <section class="hero" id="hero">
-      <div class="disc" aria-hidden="true"></div>
-      <canvas class="logo3d" id="logo3d" aria-hidden="true"></canvas>
-      <div class="logo-slot" id="logoSlot" aria-hidden="true">
-        <div class="chip" id="chip">
-          <span class="chip-word"><span id="chipWord">khẩu trang</span></span>
-          <span class="chip-tag" id="chipTag">VSL</span>
-          <span class="meter"><i id="chipBar"></i></span>
-        </div>
+      <!-- đoạn phim logo render bằng Blender (web/render/logo_scene.py): mở màn chạy một lần rồi nối sang đoạn lặp -->
+      <div class="film" id="film" aria-hidden="true">
+        <video id="filmLoop" muted playsinline loop preload="auto"></video>
+        <video id="filmIntro" muted playsinline preload="auto"></video>
+      </div>
+      <div class="wash" aria-hidden="true"></div>
+      <div class="chip" id="chip" aria-hidden="true">
+        <span class="chip-word"><span id="chipWord">khẩu trang</span></span>
+        <span class="chip-tag" id="chipTag">VSL</span>
+        <span class="meter"><i id="chipBar"></i></span>
       </div>
 
       <div class="hero-copy">
@@ -63,6 +65,25 @@
       <a class="btn dark" href="../">Dùng thử ngay</a>
     </section>
   </main>
+
+  <!-- CHẾ ĐỘ TRƯNG BÀY (laptop ở gian hàng): xem src/intro/kiosk.js -->
+  <div class="kiosk" id="kiosk" hidden>
+    <div class="k-cam" id="kCamBox"><video id="kCam" playsinline muted></video><canvas id="kDots"></canvas></div>
+    <p class="k-status" id="kStatus" aria-live="polite"></p>
+    <div class="k-panel" aria-live="polite">
+      <p class="k-label">SignBridge AI đang đọc tay bạn</p>
+      <div class="k-word-wrap"><span class="k-word" id="kWord">…</span><i class="bar" aria-hidden="true"></i></div>
+      <p class="k-hint">Ra một ký hiệu, rồi hạ tay xuống một chút để AI chốt từ.</p>
+      <div class="k-line" id="kLine"></div>
+      <p class="k-tip" id="kTip"></p>
+      <p class="k-url">Thử trên điện thoại của bạn: <b>signbridge-vn.pages.dev</b></p>
+    </div>
+    <button class="k-exit" id="kExit" type="button">Thoát</button>
+  </div>
+  <div class="k-start" id="kStart" hidden>
+    <button class="btn primary" type="button">Bắt đầu trưng bày</button>
+    <p>Mở toàn màn hình và bật camera. Bấm Esc để thoát.</p>
+  </div>
 
   <script type="module" src="/src/intro/main.js"></script>
 </body>
